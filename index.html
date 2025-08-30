@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Bridge Shape Dojo</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <aside>
+    <h2 class="muted" style="margin:6px 0 10px;">Patterns</h2>
+    <div class="card">
+      <label for="pattern">Choose pattern</label><br>
+      <select id="pattern" style="width:100%;margin-top:.4rem">
+        <option value="left">1) Left Triangle</option>
+        <option value="hleft">2) Hollow Left Triangle</option>
+        <option value="dleft">3) Downward Left Triangle</option>
+        <option value="dhleft">4) Downward Hollow Left Triangle</option>
+        <option value="right">5) Right Triangle</option>
+        <option value="hright">6) Hollow Right Triangle</option>
+        <option value="dright">7) Downward Right Triangle</option>
+        <option value="dhright">8) Downward Hollow Right Triangle</option>
+        <option value="pyr">9) Pyramid</option>
+        <option value="hpyr">10) Hollow Pyramid</option>
+        <option value="dpyr">11) Downward Pyramid</option>
+        <option value="hdpyr">12) Downward Hollow Pyramid</option>
+        <option value="sq">13) Square</option>
+        <option value="hsq">14) Hollow Square</option>
+        <option value="xsq">15) Crossed Square</option>
+        <option value="dia">16) Diamond</option>
+        <option value="hdia">17) Hollow Diamond</option>
+      </select>
+      <div style="margin-top:.6rem;display:flex;gap:.5rem;align-items:center">
+        <label for="n">N:</label>
+        <input id="n" type="number" min="1" value="5" style="width:64px">
+      </div>
+    </div>
+    
+    <div class="card">
+      <h3 class="muted" style="margin:.2rem 0 .4rem">Expected Pattern</h3>
+      <pre id="expectedPattern" style="font-family:'Monaco','Menlo','Ubuntu Mono',monospace;font-size:12px;line-height:1.2;margin:0;color:var(--text);background:#f7fafc;padding:8px;border-radius:4px;overflow:auto;max-height:200px;border:1px solid var(--b)"></pre>
+    </div>
+    <div class="card">
+      <b>Hint</b>
+      <p class="tiny">Start with two nested <code>for</code> loops. For “right”/pyramids, print leading spaces before stars. “Hollow” = only borders are stars.</p>
+    </div>
+  </aside>
+
+  <main>
+    <header>
+      <h1>Bridge Shape Dojo</h1>
+      <span id="status" class="status"></span>
+      <div class="row">
+        <button class="btn" id="runBtn">Run ▶</button>
+        <button class="btn" id="resetBtn">Reset</button>
+      </div>
+    </header>
+
+    <textarea id="editor" spellcheck="false"></textarea>
+
+    <div style="border-top:1px solid var(--b);padding:.75rem;min-height:220px">
+      <h3 class="muted" style="margin:.2rem 0 .4rem">Your Output</h3>
+      <pre id="stdout" style="font-family:'Monaco','Menlo','Ubuntu Mono',monospace;font-size:14px;line-height:1.4;margin:0;color:var(--text);background:#f7fafc;padding:12px;border-radius:4px;overflow:auto;min-height:180px;border:1px solid var(--b)"></pre>
+    </div>
+
+    <div style="border-top:1px solid var(--b);padding:.5rem .75rem">
+      <div id="feedback" class="tiny"></div>
+    </div>
+  </main>
+</div>
+
+<script src="cpp-interpreter.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
