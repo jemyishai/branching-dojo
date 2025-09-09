@@ -42,7 +42,6 @@ Bridge Shape Dojo is an interactive C++ learning platform designed to teach nest
 │   ├── linter.js       # Educational C++ linting system
 │   └── ui-components.js# UI utilities & collapsible components
 ├── AI_ENHANCEMENT_ROADMAP.md # Future AI integration plans
-├── CLAUDE.md           # Development guidance for Claude Code
 └── README.md           # This documentation
 ```
 
