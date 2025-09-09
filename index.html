@@ -4,13 +4,43 @@
 <meta charset="utf-8">
 <title>Bridge Shape Dojo</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+<header class="main-header">
+  <h1>Bridge Shape</h1>
+  <span id="status" class="status" aria-live="polite"></span>
+  <div class="row">
+    <button class="btn" id="runBtn">Run ▶</button>
+    <button class="btn" id="resetBtn">Reset</button>
+    <button class="btn" id="lintBtn">Linting: Off</button>
+    <button id="themeToggle" class="btn" type="button" aria-pressed="false" title="Toggle theme">
+      <span class="label">Matrix</span>
+    </button>
+  </div>
+</header>
+
+<!-- Welcome Modal -->
+<div id="welcomeModal" class="modal" style="display: none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Welcome to Bridge Shape Dojo!</h3>
+      <button class="modal-close" id="closeModal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p>Hi! This is a tool to help learners practice nested for-loops. It is designed with beginning coders in mind, however, please keep in mind this site is just a tool. We do not know if a question like this will be on exam one.</p>
+      <p>Please read the Note to User section. Note that the C++ code is not actually compiled, though this Dojo functions well for practicing nested for-loops. Future versions of this site will give specific feedback for these problems.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" id="getStarted">Get Started</button>
+    </div>
+  </div>
+</div>
+
 <div class="app">
   <aside>
-    <h2 class="muted" style="margin:6px 0 10px;">Patterns</h2>
+    <h2 class="muted" style="margin:0 0 10px;">Patterns</h2>
     <div class="card">
       <label for="pattern">Choose pattern</label><br>
       <select id="pattern" style="width:100%;margin-top:.4rem">
@@ -43,21 +73,39 @@
       <pre id="expectedPattern" style="font-family:'Monaco','Menlo','Ubuntu Mono',monospace;font-size:12px;line-height:1.2;margin:0;color:var(--text);background:#f7fafc;padding:8px;border-radius:4px;overflow:auto;max-height:200px;border:1px solid var(--b)"></pre>
     </div>
     <div class="card">
-      <b>Hint</b>
-      <p class="tiny">Start with two nested <code>for</code> loops. For “right”/pyramids, print leading spaces before stars. “Hollow” = only borders are stars.</p>
+      <div class="hint-header" id="hintToggle" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;">
+        <b>Hint</b>
+        <span id="hintArrow" style="font-size:12px;transition:transform 0.2s;">▼</span>
+      </div>
+      <div id="hintContent" style="display:none;margin-top:0.5rem;">
+        <p id="patternHint" class="tiny">Start with two nested <code>for</code> loops. For "right"/pyramids, print leading spaces before stars. "Hollow" = only borders are stars.</p>
+      </div>
+    </div>
+    
+    <div class="card">
+      <div class="note-header" id="noteToggle" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;">
+        <b>Note to User</b>
+        <span id="noteArrow" style="font-size:12px;transition:transform 0.2s;">▼</span>
+      </div>
+      <div id="noteContent" style="display:none;margin-top:0.5rem;">
+        <ul class="tiny" style="margin: 0; padding-left: 1.2rem;">
+          <li>Use the Code Editor to practice coding shapes C++</li> 
+          <li>This Dojo functions well for practicing nested for-loops but note that this code is not actually being compiled</li>
+          <li>Much C++ functionality will not work in this Dojo</li>
+          <li>This Dojo is meant to practice making shapes with nested for-loops</li>
+          <li>The linter is intentionally poor</li>
+          <li>Rather than highlight it will force you to read and review what you've coded</li>
+          <li>The shapes and patterns get progressively harder</li>
+          <li>Be careful not to overdue it on practicing.</li>
+          <li>Future versions of this site will offer specific feedback to help understand issues with this code</li>
+          <li>For best results use a desktop or laptop computer</li>
+        </ul>
+      </div>
     </div>
   </aside>
 
   <main>
-    <header>
-      <h1>Bridge Shape Dojo</h1>
-      <span id="status" class="status"></span>
-      <div class="row">
-        <button class="btn" id="runBtn">Run ▶</button>
-        <button class="btn" id="resetBtn">Reset</button>
-      </div>
-    </header>
-
+    <h2 class="muted" style="margin:1.5rem 0 10px 0.75rem;">Code Editor</h2>
     <textarea id="editor" spellcheck="false"></textarea>
 
     <div style="border-top:1px solid var(--b);padding:.75rem;min-height:220px">
@@ -72,6 +120,84 @@
 </div>
 
 <script src="cpp-interpreter.js"></script>
-<script src="app.js"></script>
+<script src="js/patterns.js"></script>
+<script src="js/linter.js"></script>
+<script src="js/app-state.js"></script>
+<script src="js/ui-components.js"></script>
+<script src="js/main.js"></script>
+
+<script>
+// Compact header on scroll
+let prevScrollY = scrollY;
+addEventListener('scroll', () => {
+  const header = document.querySelector('.main-header');
+  if (!header) return;
+  const scrollingDown = scrollY > prevScrollY;
+  header.classList.toggle('compact', scrollingDown && scrollY > 64);
+  prevScrollY = scrollY;
+});
+
+// Theme toggle system
+(() => {
+  const KEY = 'dojo-theme';
+  const $root = document.documentElement;
+  const btn = document.getElementById('themeToggle');
+
+  // initial: saved → system → classic
+  const saved = localStorage.getItem(KEY);
+  const prefersDark = matchMedia('(prefers-color-scheme: dark)').matches;
+  const initial = saved || (prefersDark ? 'matrix' : 'classic');
+  $root.setAttribute('data-theme', initial);
+  if (btn) {
+    btn.setAttribute('aria-pressed', String(initial === 'matrix'));
+    btn.querySelector('.label').textContent = initial === 'matrix' ? 'Classic' : 'Matrix';
+  }
+
+  btn?.addEventListener('click', () => {
+    const cur = $root.getAttribute('data-theme') || 'classic';
+    const next = cur === 'matrix' ? 'classic' : 'matrix';
+    $root.setAttribute('data-theme', next);
+    localStorage.setItem(KEY, next);
+    btn.setAttribute('aria-pressed', String(next === 'matrix'));
+    btn.querySelector('.label').textContent = next === 'matrix' ? 'Classic' : 'Matrix';
+  });
+})();
+
+// Welcome modal system
+(() => {
+  const modal = document.getElementById('welcomeModal');
+  const closeBtn = document.getElementById('closeModal');
+  const getStartedBtn = document.getElementById('getStarted');
+  const KEY = 'dojo-welcome-shown';
+  
+  // Show modal on first visit
+  if (!localStorage.getItem(KEY)) {
+    setTimeout(() => {
+      modal.style.display = 'flex';
+    }, 500);
+  }
+  
+  // Close modal handlers
+  const closeModal = () => {
+    modal.style.display = 'none';
+    localStorage.setItem(KEY, 'true');
+  };
+  
+  closeBtn?.addEventListener('click', closeModal);
+  getStartedBtn?.addEventListener('click', closeModal);
+  
+  // Close on outside click
+  modal?.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal();
+  });
+  
+  // Close on escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modal.style.display === 'flex') {
+      closeModal();
+    }
+  });
+})();
+</script>
 </body>
 </html>

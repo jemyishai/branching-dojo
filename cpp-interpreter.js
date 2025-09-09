@@ -773,24 +773,18 @@ class Interpreter {
 // Main execution function
 function executeCppCode(source, N = 5) {
   try {
-    console.log('Tokenizing C++ code...');
     const tokenizer = new Tokenizer(source);
     const tokens = tokenizer.tokenize();
-    console.log('Tokens:', tokens);
     
-    console.log('Parsing AST...');
     const parser = new Parser(tokens);
     const ast = parser.parse();
-    console.log('AST:', ast);
     
-    console.log('Executing code...');
     const interpreter = new Interpreter();
     
     // Set N variable if not already declared
     interpreter.variables.set('N', N);
     
     const result = interpreter.execute(ast);
-    console.log('Execution result:', result);
     
     return result;
   } catch (error) {

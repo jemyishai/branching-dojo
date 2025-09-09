@@ -2,6 +2,27 @@
 const SP="  ", STAR="* ";
 const rep=(s,k)=>Array.from({length:k},()=>s).join("");
 
+// Pattern-specific hints
+const patternHints = {
+  left: "Start with nested loops: outer loop for rows (1 to N), inner loop for stars (1 to current row).",
+  hleft: "Like left triangle, but only print stars on borders: first/last star of each row, and fill the last row.",
+  dleft: "Downward left triangle: outer loop for rows, but decrease stars each row (N down to 1).",
+  dhleft: "Downward hollow left triangle: like dleft, but only borders have stars.",
+  right: "Right triangle needs leading spaces! Print (N - current row) spaces, then stars.",
+  hright: "Right triangle with hollow center: spaces + border stars only (except last row which is solid).",
+  dright: "Downward right triangle: increase leading spaces as you go down, decrease stars.",
+  dhright: "Downward hollow right triangle: like dright, but only border stars.",
+  pyr: "Pyramid: center-aligned triangle. Print spaces (N - row), then (2 * row - 1) stars.",
+  hpyr: "Hollow pyramid: like pyramid, but only border stars (first and last of each row).",
+  dpyr: "Downward pyramid: start wide at top, get narrower. Print spaces (row), then stars.",
+  hdpyr: "Downward hollow pyramid: like dpyr, but only border stars.",
+  sq: "Square: same number of stars in every row (N stars per row, N rows).",
+  hsq: "Hollow square: fill only the borders (top/bottom rows full, middle rows just edges).",
+  xsq: "Crossed square: like hollow square, but also fill the diagonals (when i == j or i + j == N + 1).",
+  dia: "Diamond: combine upward pyramid (1 to N) with downward pyramid (N-1 down to 1).",
+  hdia: "Hollow diamond: like diamond, but only border stars in each triangle part."
+};
+
 const patterns = {
   left: (n)=>range(1,n).map(i=>rep(STAR,i)).join("\n"),
   hleft: (n)=>range(1,n).map(i=>{
@@ -77,10 +98,55 @@ function range(a,b){ // inclusive: 1..n or 0..n-1
   return Array.from({length:(b-a+1)},(_,k)=>a+k);
 }
 
+// --- Simple C++ Linting
+function lintCppCode(code) {
+  const warnings = [];
+  const lines = code.split('\n');
+  
+  lines.forEach((line, i) => {
+    const lineNum = i + 1;
+    const trimmed = line.trim();
+    
+    // Check for missing semicolons (basic check)
+    if (trimmed && !trimmed.startsWith('//') && !trimmed.startsWith('#') && 
+        !trimmed.endsWith(';') && !trimmed.endsWith('{') && !trimmed.endsWith('}') &&
+        !trimmed.includes('for') && !trimmed.includes('if') && !trimmed.includes('else') &&
+        !trimmed.includes('while') && trimmed !== '') {
+      warnings.push(`Line ${lineNum}: Statement might be missing semicolon`);
+    }
+    
+    // Check for inconsistent spacing around operators
+    if (trimmed.includes('=') && !trimmed.includes('==') && !trimmed.includes('!=') && 
+        !trimmed.includes('<=') && !trimmed.includes('>=')) {
+      if (!/\s=\s/.test(trimmed)) {
+        warnings.push(`Line ${lineNum}: Consider adding spaces around '=' operator`);
+      }
+    }
+    
+    // Check for loop variable naming conventions
+    if (trimmed.includes('for') && !/for\s*\(\s*int\s+[ijk]\s*[=<>]/.test(trimmed)) {
+      if (/for\s*\(\s*int\s+\w+/.test(trimmed)) {
+        warnings.push(`Line ${lineNum}: Consider using 'i', 'j', or 'k' for loop variables`);
+      }
+    }
+    
+    // Check for missing braces in loops
+    if ((trimmed.includes('for') || trimmed.includes('while')) && !trimmed.includes('{')) {
+      warnings.push(`Line ${lineNum}: Consider using braces {} for loop body`);
+    }
+    
+    // Check for using cout without std:: or using namespace
+    if (trimmed.includes('cout') && !code.includes('using namespace std') && !trimmed.includes('std::cout')) {
+      warnings.push(`Line ${lineNum}: Use 'std::cout' or add 'using namespace std;'`);
+    }
+  });
+  
+  return warnings;
+}
+
 // --- Enhanced C++ interpreter using proper parsing
 function pseudorunSubset(src, N){
   try {
-    console.log('Using new C++ interpreter...');
     
     // Use the full C++ interpreter
     const result = executeCppCode(src, N);
@@ -149,11 +215,7 @@ const defaultCode = `#include <iostream>
 using namespace std;
 
 int main() {
-    int N = 5;
-    for (int i = 1; i <= N; ++i) {
-        for (int j = 1; j <= i; ++j) cout << "* ";
-        cout << "\\n";
-    }
+   
     return 0;
 }`;
 
@@ -165,7 +227,6 @@ document.addEventListener('DOMContentLoaded', function() {
     return;
   } 
   
-  console.log('Editor found, setting default code');
   editor.value = defaultCode;
   
   // Tab key support
@@ -183,18 +244,27 @@ document.addEventListener('DOMContentLoaded', function() {
   const status = document.getElementById('status');
   const runBtn = document.getElementById('runBtn');
   const resetBtn = document.getElementById('resetBtn');
+  const lintBtn = document.getElementById('lintBtn');
   const outEl = document.getElementById('stdout');
   const expectedPatternEl = document.getElementById('expectedPattern');
   const fb = document.getElementById('feedback');
   const sel = document.getElementById('pattern');
   const nInput = document.getElementById('n');
+  const hintEl = document.getElementById('patternHint');
   
-  // Update expected pattern when selection changes
+  // Linting state
+  let lintingEnabled = false;
+  
+  // Update expected pattern and hint when selection changes
   function updateExpectedPattern() {
     const key = sel.value;
     const N = parseInt(nInput.value, 10) || 5;
     const expected = (patterns[key] ?? patterns.left)(N);
     expectedPatternEl.textContent = expected;
+    
+    // Update hint
+    const hint = patternHints[key] ?? patternHints.left;
+    hintEl.innerHTML = hint;
   }
   
   // Initialize expected pattern
@@ -205,14 +275,69 @@ document.addEventListener('DOMContentLoaded', function() {
   nInput.addEventListener('input', updateExpectedPattern);
 
   runBtn.addEventListener('click', () => {
-    console.log('Run button clicked!');
     run();
   });
   
   resetBtn.addEventListener('click', () => {
-    console.log('Reset button clicked!');
     editor.value = defaultCode;
     editor.focus();
+  });
+  
+  // Linting toggle
+  lintBtn.addEventListener('click', () => {
+    lintingEnabled = !lintingEnabled;
+    lintBtn.textContent = lintingEnabled ? 'Linting: On' : 'Linting: Off';
+    lintBtn.style.background = lintingEnabled ? '#90cdf4' : '#bee3f8';
+    
+    if (lintingEnabled) {
+      showLintWarnings();
+    } else {
+      hideLintWarnings();
+    }
+  });
+  
+  // Show lint warnings
+  function showLintWarnings() {
+    if (!lintingEnabled) return;
+    
+    const warnings = lintCppCode(editor.value);
+    const lintEl = document.getElementById('lintWarnings') || createLintElement();
+    
+    if (warnings.length > 0) {
+      lintEl.innerHTML = '<h4 class="muted" style="margin:.2rem 0 .4rem">Linting Suggestions</h4>' +
+        warnings.map(w => `• ${escapeHtml(w)}`).join('<br>');
+      lintEl.style.display = 'block';
+    } else {
+      lintEl.innerHTML = '<h4 class="muted" style="margin:.2rem 0 .4rem">Linting Suggestions</h4>No issues found ✅';
+      lintEl.style.display = 'block';
+    }
+  }
+  
+  function hideLintWarnings() {
+    const lintEl = document.getElementById('lintWarnings');
+    if (lintEl) {
+      lintEl.style.display = 'none';
+    }
+  }
+  
+  function createLintElement() {
+    const lintEl = document.createElement('div');
+    lintEl.id = 'lintWarnings';
+    lintEl.style.cssText = 'border-top:1px solid var(--b);padding:.5rem .75rem;font-size:.85em;color:var(--muted);background:#f1f8ff;display:none';
+    
+    const main = document.querySelector('main');
+    const feedback = document.getElementById('feedback').parentNode;
+    main.insertBefore(lintEl, feedback);
+    
+    return lintEl;
+  }
+  
+  // Add linting on code changes
+  editor.addEventListener('input', () => {
+    if (lintingEnabled) {
+      clearTimeout(editor.lintTimeout);
+      editor.lintTimeout = setTimeout(showLintWarnings, 500);
+    }
   });
   
   document.addEventListener('keydown', e=>{
@@ -220,11 +345,9 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   function run(){
-    console.log('Run function called!');
     runBtn.disabled = true; 
     status.textContent = 'Running...';
     const src = editor.value;
-    console.log('Source code:', src);
     const key = sel.value;
     const N = parseInt(nInput.value,10)||5;
     const expected = (patterns[key] ?? patterns.left)(N);
@@ -237,7 +360,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (your) {
       outEl.textContent = your;
       // Compare with expected for feedback
-      const {a, b, issues} = diffLines(your, expected);
+      const {a} = diffLines(your, expected);
       renderAnnotated(outEl, a);
     } else {
       outEl.textContent = "No output generated. Check your code structure.";
@@ -253,11 +376,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const expectedTrimmed = expected.trim();
     const isMatch = yourTrimmed === expectedTrimmed;
     
-    console.log('Comparison:', {
-      your: JSON.stringify(yourTrimmed), 
-      expected: JSON.stringify(expectedTrimmed),
-      match: isMatch
-    });
     
     fb.innerHTML = msgs.length ? msgs.map(m=>`• ${escapeHtml(m)}`).join("<br>") :
       (isMatch ? `<span class="ok">Perfect! ✅ Your pattern matches exactly!</span>` :
