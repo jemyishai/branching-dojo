@@ -570,8 +570,8 @@ class Parser {
       return new LiteralNode(value, 'CHAR');
     }
     
-    // Identifier
-    if (this.match('IDENTIFIER')) {
+    // Identifier or endl keyword
+    if (this.match('IDENTIFIER') || (this.match('KEYWORD') && this.current().value === 'endl')) {
       const name = this.current().value;
       this.advance();
       return new IdentifierNode(name);
@@ -700,6 +700,10 @@ class Interpreter {
       case 'LITERAL':
         return node.literalType === 'CHAR' ? node.value.charCodeAt(0) : node.value;
       case 'IDENTIFIER':
+        // Handle endl as a special case
+        if (node.name === 'endl') {
+          return '\n';
+        }
         return this.variables.get(node.name) || 0;
       case 'BINARY_OP':
         return this.evaluateBinaryOp(node);
@@ -759,6 +763,9 @@ class Interpreter {
   }
 
   toString(value) {
+    if (typeof value === 'string') {
+      return value;  // Return strings directly (including '\n' from endl)
+    }
     if (typeof value === 'number') {
       // Check if it's a character code
       if (value >= 32 && value <= 126) {
