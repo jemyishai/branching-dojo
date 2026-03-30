@@ -1,7 +1,7 @@
 // AI Assistant for Bridge Shape Dojo — Phase 1: Foundation
 // Loads Transformers.js via CDN, tries CodeT5-small, falls back to rule-based hints
 
-const AI_CDN = 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1';
+const AI_CDN = 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1/dist/transformers.min.js';
 const AI_MODEL = 'Xenova/codet5-small';
 const AI_TASK  = 'text2text-generation';
 const LOAD_DELAY_MS = 2000; // wait for page to feel ready before downloading model
