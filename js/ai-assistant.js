@@ -80,6 +80,31 @@ const PATTERN_FALLBACKS = {
 };
 
 // ---------------------------------------------------------------------------
+// Per-pattern for-loop part suggestions (init / condition / increment)
+// Used by the inline loop-bound ghost hint feature
+// ---------------------------------------------------------------------------
+const FOR_PART_HINTS = {
+  left:    { outer: { init:'int i = 1', cond:'i <= N',     incr:'i++' }, inner: { init:'int j = 1', cond:'j <= i',     incr:'j++' } },
+  hleft:   { outer: { init:'int i = 1', cond:'i <= N',     incr:'i++' }, inner: { init:'int j = 1', cond:'j <= i',     incr:'j++' } },
+  dleft:   { outer: { init:'int i = N', cond:'i >= 1',     incr:'i--' }, inner: { init:'int j = 1', cond:'j <= i',     incr:'j++' } },
+  dhleft:  { outer: { init:'int i = N', cond:'i >= 1',     incr:'i--' }, inner: { init:'int j = 1', cond:'j <= i',     incr:'j++' } },
+  right:   { outer: { init:'int i = 1', cond:'i <= N',     incr:'i++' }, inner: { init:'int j = 1', cond:'j <= N-i',   incr:'j++' } },
+  hright:  { outer: { init:'int i = 1', cond:'i <= N',     incr:'i++' }, inner: { init:'int j = 1', cond:'j <= i',     incr:'j++' } },
+  dright:  { outer: { init:'int i = N', cond:'i >= 1',     incr:'i--' }, inner: { init:'int j = 1', cond:'j <= N-i',   incr:'j++' } },
+  dhright: { outer: { init:'int i = N', cond:'i >= 1',     incr:'i--' }, inner: { init:'int j = 1', cond:'j <= i',     incr:'j++' } },
+  pyr:     { outer: { init:'int i = 1', cond:'i <= N',     incr:'i++' }, inner: { init:'int j = 1', cond:'j <= 2*i-1', incr:'j++' } },
+  hpyr:    { outer: { init:'int i = 1', cond:'i <= N',     incr:'i++' }, inner: { init:'int j = 1', cond:'j <= 2*i-1', incr:'j++' } },
+  dpyr:    { outer: { init:'int i = N', cond:'i >= 1',     incr:'i--' }, inner: { init:'int j = 1', cond:'j <= 2*i-1', incr:'j++' } },
+  hdpyr:   { outer: { init:'int i = N', cond:'i >= 1',     incr:'i--' }, inner: { init:'int j = 1', cond:'j <= 2*i-1', incr:'j++' } },
+  sq:      { outer: { init:'int i = 1', cond:'i <= N',     incr:'i++' }, inner: { init:'int j = 1', cond:'j <= N',     incr:'j++' } },
+  hsq:     { outer: { init:'int i = 1', cond:'i <= N',     incr:'i++' }, inner: { init:'int j = 1', cond:'j <= N',     incr:'j++' } },
+  xsq:     { outer: { init:'int i = 1', cond:'i <= N',     incr:'i++' }, inner: { init:'int j = 1', cond:'j <= N',     incr:'j++' } },
+  dia:     { outer: { init:'int i = 1', cond:'i <= N',     incr:'i++' }, inner: { init:'int j = 1', cond:'j <= 2*i-1', incr:'j++' } },
+  hdia:    { outer: { init:'int i = 1', cond:'i <= N',     incr:'i++' }, inner: { init:'int j = 1', cond:'j <= 2*i-1', incr:'j++' } },
+  _default:{ outer: { init:'int i = 1', cond:'i <= N',     incr:'i++' }, inner: { init:'int j = 1', cond:'j <= ...',   incr:'j++' } },
+};
+
+// ---------------------------------------------------------------------------
 // Cursor-level context messages shown while the student is typing
 // ---------------------------------------------------------------------------
 const CURSOR_HINTS = {
@@ -326,6 +351,59 @@ class AIAssistant {
     }
 
     return null;
+  }
+
+  // -------------------------------------------------------------------------
+  // getForLoopHint — detects if cursor is inside a for() and returns the
+  // suggested value for whichever part (init/cond/incr) the cursor is in.
+  // Returns { part: 'init'|'cond'|'incr', suggestion: string } or null.
+  // -------------------------------------------------------------------------
+  getForLoopHint(code, cursorPos, patternKey) {
+    const before = code.substring(0, cursorPos);
+
+    // Find the last for( keyword before the cursor
+    const forRegex = /\bfor\s*\(/g;
+    let lastFor = null;
+    let m;
+    while ((m = forRegex.exec(before)) !== null) lastFor = m;
+    if (!lastFor) return null;
+
+    // Index of the opening '(' of this for statement
+    const openParen = lastFor.index + lastFor[0].length - 1;
+
+    // Find the matching closing ')' scanning forward from openParen
+    let depth = 0, closeParen = -1;
+    for (let i = openParen; i < code.length; i++) {
+      if (code[i] === '(') depth++;
+      else if (code[i] === ')') { depth--; if (depth === 0) { closeParen = i; break; } }
+    }
+
+    // Cursor must be strictly inside the parens
+    if (cursorPos <= openParen || (closeParen !== -1 && cursorPos > closeParen)) return null;
+
+    // Count semicolons from openParen+1 to cursorPos, skipping nested parens
+    const segment = code.substring(openParen + 1, cursorPos);
+    let semis = 0, d = 0;
+    for (const ch of segment) {
+      if (ch === '(') d++;
+      else if (ch === ')') d--;
+      else if (ch === ';' && d === 0) semis++;
+    }
+    if (semis > 2) return null; // not a for() we recognise
+
+    // Determine outer vs inner loop by counting for loops before this one
+    const beforeFor = code.substring(0, lastFor.index);
+    const forsBefore = (beforeFor.match(/\bfor\s*\(/g) || []).length;
+    const loopHints = FOR_PART_HINTS[patternKey] ?? FOR_PART_HINTS._default;
+    const loop = forsBefore === 0 ? loopHints.outer : loopHints.inner;
+    if (!loop) return null;
+
+    const parts = ['init', 'cond', 'incr'];
+    const part  = parts[semis];
+    const suggestion = loop[part];
+    if (!suggestion) return null;
+
+    return { part, suggestion };
   }
 
   // -------------------------------------------------------------------------
