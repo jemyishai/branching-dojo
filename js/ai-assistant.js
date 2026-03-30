@@ -287,43 +287,49 @@ class AIAssistant {
   // getMistakeHint — specific feedback when output doesn't match
   // Returns a hint string or null if no specific diagnosis found
   // -------------------------------------------------------------------------
-  getMistakeHint(yourOutput, expected, patternKey) {
+  getMistakeHint(yourOutput, expected, patternKey, studentCode) {
     if (!yourOutput || !yourOutput.trim()) return null;
 
-    const outLines = yourOutput.trim().split('\n').map(l => l.trimEnd());
-    const expLines = expected.trim().split('\n').map(l => l.trimEnd());
+    const outLines  = yourOutput.trim().split('\n').map(l => l.trimEnd());
+    const expLines  = expected.trim().split('\n').map(l => l.trimEnd());
+    const countStars = l => (l.match(/\*/g) || []).length;
+
+    // 1. Pattern-specific output analysis (most specific)
+    const specific = this._getPatternHint(outLines, expLines, patternKey, countStars);
+    if (specific) return specific;
+
+    // 2. General output checks
 
     // Row count mismatch
     if (outLines.length < expLines.length) {
-      return `Your output has ${outLines.length} row${outLines.length !== 1 ? 's' : ''} but needs ${expLines.length}. Check your outer loop — it may be stopping too early.`;
+      return `Your output has ${outLines.length} row${outLines.length !== 1 ? 's' : ''} but needs ${expLines.length}. Check your outer loop — it may be stopping too early (try i <= N instead of i < N).`;
     }
     if (outLines.length > expLines.length) {
       return `Your output has ${outLines.length} rows but needs only ${expLines.length}. Check your outer loop condition — it may be running too many times.`;
     }
 
-    // Upside-down check (reverse the output lines and compare)
+    // Upside-down check
     const flipped = [...outLines].reverse().join('\n');
     if (flipped === expLines.join('\n')) {
-      const isDownward = patternKey.startsWith('d');
-      return `Your triangle is upside-down — try counting your outer loop ${isDownward ? 'UP from 1 to N' : 'DOWN from N to 1'}.`;
+      const isDownward = ['dleft','dright','dpyr','dhleft','dhright','hdpyr'].includes(patternKey);
+      return `Your pattern is upside-down — try counting your outer loop ${isDownward ? 'UP from 1 to N' : 'DOWN from N to 1'}.`;
     }
 
     // Leading spaces check
     const expHasLeadSpaces = expLines.some(l => l.startsWith(' '));
     const outHasLeadSpaces = outLines.some(l => l.startsWith(' '));
     if (expHasLeadSpaces && !outHasLeadSpaces) {
-      return 'Your pattern is missing leading spaces. Print spaces before each row\'s stars to align the shape correctly.';
+      return "Your pattern is missing leading spaces. Print spaces before each row's stars to align the shape correctly.";
     }
     if (!expHasLeadSpaces && outHasLeadSpaces) {
-      return 'Your pattern has extra leading spaces that shouldn\'t be there. Check your space-printing loop.';
+      return "Your pattern has extra leading spaces that shouldn't be there. Check your space-printing loop.";
     }
 
     // Star count analysis
-    const countStars = l => (l.match(/\*/g) || []).length;
-    const outCounts  = outLines.map(countStars);
-    const expCounts  = expLines.map(countStars);
-    const totalOut   = outCounts.reduce((a, b) => a + b, 0);
-    const totalExp   = expCounts.reduce((a, b) => a + b, 0);
+    const outCounts = outLines.map(countStars);
+    const expCounts = expLines.map(countStars);
+    const totalOut  = outCounts.reduce((a, b) => a + b, 0);
+    const totalExp  = expCounts.reduce((a, b) => a + b, 0);
 
     if (totalExp > 0 && totalOut > totalExp * 1.4) {
       return 'You have too many stars per row — check the upper bound of your inner loop.';
@@ -332,9 +338,9 @@ class AIAssistant {
       return 'You have too few stars — your inner loop upper bound may be too small.';
     }
 
-    // Hollow pattern: expected is hollow but output looks solid
-    const isHollowPattern = /^h/.test(patternKey) || /h/.test(patternKey);
-    if (isHollowPattern && expLines.length > 2) {
+    // Hollow pattern fallback
+    const hollowPatterns = ['hleft','hright','hpyr','hsq','hdpyr','dhright','dhleft','hdia'];
+    if (hollowPatterns.includes(patternKey) && expLines.length > 2) {
       const expMidHollow = expLines.slice(1, -1).some(l => /\*\s+\*/.test(l));
       const outMidSolid  = outLines.slice(1, -1).some(l => countStars(l) > 2);
       if (expMidHollow && outMidSolid) {
@@ -348,6 +354,169 @@ class AIAssistant {
       const got  = countStars(outLines[firstBad]);
       const want = countStars(expLines[firstBad]);
       return `Row ${firstBad + 1} has ${got} star${got !== 1 ? 's' : ''} but needs ${want}. Trace your loop variable for that row to see why.`;
+    }
+
+    // 3. Code-based hints (fallback — actionable but less specific)
+    if (studentCode) {
+      return this._getCodeHint(studentCode, patternKey);
+    }
+
+    return null;
+  }
+
+  // -------------------------------------------------------------------------
+  // _getPatternHint — per-pattern output analysis
+  // -------------------------------------------------------------------------
+  _getPatternHint(outLines, expLines, patternKey, countStars) {
+    const outCounts = outLines.map(countStars);
+    const expCounts = expLines.map(countStars);
+
+    // --- Left triangle ---
+    if (patternKey === 'left') {
+      // First row has N stars → inner loop uses N instead of i
+      if (outLines.length > 0 && expLines.length > 0 &&
+          outCounts[0] === expCounts[expCounts.length - 1] && expCounts.length > 1) {
+        return 'Your inner loop uses N instead of i — the inner bound should grow each row. Change j <= N to j <= i.';
+      }
+      if (outLines.length === expLines.length && outCounts.some((c, i) => c !== expCounts[i])) {
+        return 'Each row should have exactly i stars. Check that your inner loop runs from 1 to i (not to a fixed value like N).';
+      }
+    }
+
+    // --- Right triangle ---
+    if (patternKey === 'right') {
+      const noSpaces    = outLines.every(l => !l.startsWith(' '));
+      const expHasSpaces = expLines.some(l => l.startsWith(' '));
+      if (noSpaces && expHasSpaces) {
+        return 'Add a loop that prints N-i spaces before your stars — the right triangle needs to be right-aligned.';
+      }
+    }
+
+    // --- Pyramid ---
+    if (patternKey === 'pyr') {
+      if (outLines.length === expLines.length) {
+        if (outLines.every(l => !l.startsWith(' ')) && expLines.some(l => l.startsWith(' '))) {
+          return 'Missing leading spaces — add a loop that prints N-i spaces before the stars to center the pyramid.';
+        }
+        // Row i should have an odd number of stars (1, 3, 5...)
+        if (outCounts.some(c => c > 1 && c % 2 === 0)) {
+          return 'Row i should have 2*i-1 stars (1, 3, 5...). Check your inner loop bound — it should be j <= 2*i-1.';
+        }
+      }
+    }
+
+    // --- Hollow patterns ---
+    const hollowPatterns = ['hleft','hright','hpyr','hsq','hdpyr','dhright','dhleft','hdia'];
+    if (hollowPatterns.includes(patternKey) && expLines.length > 2) {
+      const midExp = expLines.slice(1, -1);
+      const midOut = outLines.length > 2 ? outLines.slice(1, outLines.length - 1) : [];
+      const midExpCounts = midExp.map(countStars);
+      const midOutCounts = midOut.map(countStars);
+
+      if (midExp.length > 0 && midOut.length > 0) {
+        const tooSolid = midOutCounts.some((c, i) => c > (midExpCounts[i] ?? 0) + 1);
+        const tooEmpty = midOutCounts.every(c => c === 0) && midExpCounts.some(c => c > 0);
+
+        if (tooSolid) {
+          return 'Looks solid — you need a border condition in your inner loop: print a star only on the first or last position of each row.';
+        }
+        if (tooEmpty) {
+          return 'Too aggressive — only skip the interior spaces between the first and last star, not all positions. Check your border condition.';
+        }
+      }
+    }
+
+    // --- Square ---
+    if (patternKey === 'sq') {
+      if (outLines.length === expLines.length && outLines.length > 0) {
+        if (outCounts.some(c => c !== outCounts[0])) {
+          return 'Every row should have exactly N stars. Make sure your inner loop runs from 1 to N — not from 1 to i.';
+        }
+      }
+    }
+
+    // --- Hollow square (dedicated, more specific message than hollow group) ---
+    if (patternKey === 'hsq') {
+      if (expLines.length > 2 && outLines.length === expLines.length) {
+        const expMidHollow = expLines.slice(1, -1).some(l => /\*\s+\*/.test(l));
+        const outMidSolid  = outLines.slice(1, -1).some(l => countStars(l) > 2);
+        if (expMidHollow && outMidSolid) {
+          return 'Add a border condition: print a star only if i==1, i==N, j==1, or j==N. Otherwise print a space.';
+        }
+      }
+    }
+
+    // --- Diamond / hollow diamond ---
+    if (patternKey === 'dia' || patternKey === 'hdia') {
+      const expTotal = expLines.length;       // should be 2N-1
+      const N        = Math.ceil(expTotal / 2); // N from expected row count
+      const upperExp = expLines.slice(0, N);
+      const lowerExp = expLines.slice(N);
+
+      if (outLines.length > 0 && outLines.length < expTotal) {
+        if (outLines.length === N &&
+            outLines.every((l, i) => countStars(l) === countStars(upperExp[i]))) {
+          return 'You have the upper pyramid — now add the lower half (a second loop counting i from N-1 down to 1).';
+        }
+        if (outLines.length === lowerExp.length &&
+            outLines.every((l, i) => countStars(l) === countStars(lowerExp[i]))) {
+          return 'Looks like the lower half — add the upper pyramid first (loop from 1 to N), then the lower half after it.';
+        }
+        if (outCounts.length > 1 && outCounts.every(c => c === outCounts[0])) {
+          return 'Check that your upper half expands and lower half contracts — the diamond should be widest at row N.';
+        }
+        return 'A diamond needs two loops: upper half (i from 1 to N) and lower half (i from N-1 down to 1).';
+      }
+    }
+
+    // --- Downward patterns ---
+    if (['dleft','dright','dpyr'].includes(patternKey)) {
+      if (outCounts.length > 1 && expCounts.length > 1) {
+        const outAscending  = outCounts[outCounts.length - 1] > outCounts[0];
+        const expDescending = expCounts[0] > expCounts[expCounts.length - 1];
+        if (outAscending && expDescending) {
+          return "This is the downward version — flip your outer loop to count from N down to 1: for (int i = N; i >= 1; i--).";
+        }
+      }
+    }
+
+    return null;
+  }
+
+  // -------------------------------------------------------------------------
+  // _getCodeHint — analyze source code for structural mistakes
+  // -------------------------------------------------------------------------
+  _getCodeHint(code, patternKey) {
+    // Missing inner loop
+    const forCount = (code.match(/\bfor\s*\(/g) || []).length;
+    if (forCount < 2) {
+      return 'You need a nested loop — one for rows (outer) and one for columns (inner). Add a second for loop inside the first.';
+    }
+
+    // Missing newline entirely
+    if (!/\\n|endl/.test(code)) {
+      return 'Missing newline — add cout << "\\n"; or cout << endl; after your inner loop to move to the next row.';
+    }
+
+    // endl/\n on same line as a star → newline is inside the inner loop body
+    const lines = code.split('\n');
+    if (lines.some(l => /\*/.test(l) && /(endl|\\n)/.test(l))) {
+      return 'Move your endl (or "\\n") outside the inner loop — it should print once per row, not once per star.';
+    }
+
+    // Off-by-one in outer loop: i < N should be i <= N
+    if (/\bfor\s*\([^;]*;\s*\w+\s*<\s*N\s*;/.test(code)) {
+      return 'Off-by-one: use i <= N not i < N in your outer loop — i < N stops one row short.';
+    }
+
+    // Off-by-one in inner loop: j < i (single variable bound) should be j <= i
+    const forPositions = [...code.matchAll(/\bfor\s*\(/g)].map(m => m.index);
+    if (forPositions.length >= 2) {
+      const innerCode  = code.slice(forPositions[1]);
+      const innerMatch = innerCode.match(/\bfor\s*\([^;]*;\s*(\w+)\s*<\s*([a-zA-Z_]\w*)\s*;/);
+      if (innerMatch) {
+        return `Off-by-one in inner loop: use ${innerMatch[1]} <= ${innerMatch[2]} not ${innerMatch[1]} < ${innerMatch[2]} to include the last column.`;
+      }
     }
 
     return null;

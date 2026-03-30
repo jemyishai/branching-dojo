@@ -298,7 +298,7 @@ class BridgeShapeDojoApp {
         } else {
           // Try to give a specific hint about what's wrong
           const ai   = window.aiAssistant;
-          const hint = ai ? ai.getMistakeHint(output, expected, state.selectedPattern) : null;
+          const hint = ai ? ai.getMistakeHint(output, expected, state.selectedPattern, src) : null;
           if (hint) {
             this.ui.elements.feedback.innerHTML =
               `<span class="err">✦ ${this.ui.escapeHtml(hint)}</span>`;

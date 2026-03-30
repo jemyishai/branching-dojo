@@ -26,7 +26,7 @@ A browser-based C++ learning tool for students practicing nested `for` loops by 
   - Hint panel shows loop structure template for the selected pattern
   - Cursor-aware hints update as student types (debounced 500ms)
   - "Explain My Code" button gives plain-English loop breakdown
-  - Smarter mistake hints: upside-down, row count, spaces, hollow/solid, star count
+  - Pattern-specific mistake hints: per-pattern output analysis + source code analysis for all 17 patterns (`getMistakeHint(output, expected, patternKey, studentCode)`)
 
 ---
 
@@ -54,7 +54,7 @@ A browser-based C++ learning tool for students practicing nested `for` loops by 
 
 ## Next Steps (Most Valuable)
 
-1. **More pattern-specific mistake hints** — extend `getMistakeHint()` in `ai-assistant.js` with per-pattern rules beyond the current generic checks
+1. ~~**More pattern-specific mistake hints**~~ — done: `getMistakeHint()` now accepts `studentCode` and covers all 17 patterns with dedicated output + code-analysis checks
 2. **Better C++ interpreter coverage** — add `while`, `do-while`, basic void functions; unblocks a wider class of student solutions
 3. **Challenge mode** — hide expected output so the student must figure it out; toggle in sidebar
 4. **Keyboard shortcuts** — Ctrl+Enter already runs code; add Ctrl+R to reset editor, document all shortcuts in UI
