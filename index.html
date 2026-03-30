@@ -43,6 +43,14 @@
 <div class="app">
   <aside>
     <h2 class="muted" style="margin:0 0 10px;">Patterns</h2>
+
+    <!-- Progress summary -->
+    <div id="progressSummary" class="progress-summary">
+      <span id="progressText">0 / 17 solved</span>
+      <div id="progressBar" class="progress-bar"><div id="progressFill" class="progress-fill" style="width:0%"></div></div>
+      <button id="resetProgressBtn" class="reset-progress-btn" title="Reset all progress">Reset progress</button>
+    </div>
+
     <div class="card">
       <label for="pattern">Choose pattern</label><br>
       <select id="pattern" style="width:100%;margin-top:.4rem">
@@ -115,6 +123,9 @@
     <h2 class="muted" style="margin:1.5rem 0 10px 0.75rem;">Code Editor</h2>
     <textarea id="editor" spellcheck="false"></textarea>
 
+    <!-- Loop bound hint: ghost text shown when cursor is inside a for() -->
+    <div id="loopBoundHint" class="loop-bound-hint" style="display:none" aria-live="polite"></div>
+
     <div style="border-top:1px solid var(--b);padding:.75rem;min-height:220px">
       <h3 class="muted" style="margin:.2rem 0 .4rem">Your Output</h3>
       <pre id="stdout" style="font-family:'Monaco','Menlo','Ubuntu Mono',monospace;font-size:14px;line-height:1.4;margin:0;color:var(--text);background:#f7fafc;padding:12px;border-radius:4px;overflow:auto;min-height:180px;border:1px solid var(--b)"></pre>
@@ -131,6 +142,7 @@
 <script src="js/linter.js"></script>
 <script src="js/app-state.js"></script>
 <script src="js/ui-components.js"></script>
+<script src="js/progress.js"></script>
 <script src="js/main.js"></script>
 <script src="js/ai-assistant.js"></script>
 

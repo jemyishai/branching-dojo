@@ -15,6 +15,7 @@ class BridgeShapeDojoApp {
     this.linter = new CppLinter();
     this.appState = new AppState();
     this.ui = new UIComponents(this.appState, this.patternManager, this.linter);
+    this.progress = new ProgressTracker();
 
     this.setupStateSubscriptions();
     this.lintTimeout = null;
@@ -51,6 +52,7 @@ class BridgeShapeDojoApp {
     this.setupEventListeners();
     this.initializeState();
     this.setupAIAssistant();
+    this.setupProgress();
   }
 
   // Set up all event listeners
@@ -84,6 +86,12 @@ class BridgeShapeDojoApp {
         this.ui.elements.editor.selectionStart = this.ui.elements.editor.selectionEnd = start + 4;
         this.appState.setCode(this.ui.elements.editor.value);
       }
+    });
+
+    // Hide loop-bound hint when editor loses focus
+    this.ui.elements.editor.addEventListener('blur', () => {
+      const hintEl = document.getElementById('loopBoundHint');
+      if (hintEl) hintEl.style.display = 'none';
     });
 
     // Also update cursor hint when cursor moves (click/select)
@@ -205,6 +213,25 @@ class BridgeShapeDojoApp {
     }
 
     box.style.display = 'block';
+
+    // Also update the inline loop-bound ghost hint
+    this.updateLoopBoundHint(state.code, cursorPos, state.selectedPattern);
+  }
+
+  // Show a subtle ghost hint when cursor is inside a for() expression
+  updateLoopBoundHint(code, cursorPos, patternKey) {
+    const hintEl = document.getElementById('loopBoundHint');
+    if (!hintEl) return;
+
+    const ai = window.aiAssistant;
+    if (!ai || !ai.getForLoopHint) { hintEl.style.display = 'none'; return; }
+
+    const hint = ai.getForLoopHint(code, cursorPos, patternKey);
+    if (!hint) { hintEl.style.display = 'none'; return; }
+
+    const partLabel = { init: 'initializer', cond: 'condition', incr: 'increment' }[hint.part] || hint.part;
+    hintEl.textContent = `for() ${partLabel} → ${hint.suggestion}`;
+    hintEl.style.display = 'block';
   }
 
   // Show a plain-English explanation of the student's code
@@ -237,6 +264,9 @@ class BridgeShapeDojoApp {
     const src = state.code;
     const N = state.n;
 
+    // Record the attempt regardless of outcome
+    this.progress.recordAttempt(state.selectedPattern);
+
     try {
       const result = this.executeCode(src, N);
       const output = result.output ?? "";
@@ -260,8 +290,11 @@ class BridgeShapeDojoApp {
           this.ui.elements.feedback.innerHTML =
             msgs.map(m => `• ${this.ui.escapeHtml(m)}`).join('<br>');
         } else if (isMatch) {
+          const firstTime = this.progress.recordCompletion(state.selectedPattern);
+          this.updatePatternBadges();
+          const celebration = firstTime ? ' First time! 🎉' : '';
           this.ui.elements.feedback.innerHTML =
-            `<span class="ok">Perfect! ✅ Your pattern matches exactly!</span>`;
+            `<span class="ok">Perfect! ✅ Your pattern matches exactly!${celebration}</span>`;
         } else {
           // Try to give a specific hint about what's wrong
           const ai   = window.aiAssistant;
@@ -288,6 +321,53 @@ class BridgeShapeDojoApp {
 
     this.ui.elements.status.textContent = 'Done.';
     this.ui.elements.runBtn.disabled = false;
+  }
+
+  // Set up progress tracking UI and event listeners
+  setupProgress() {
+    // Wire reset button
+    const resetBtn = document.getElementById('resetProgressBtn');
+    if (resetBtn) {
+      resetBtn.addEventListener('click', () => {
+        if (confirm('Reset all progress? This cannot be undone.')) {
+          this.progress.reset();
+          this.updateProgressUI();
+          this.updatePatternBadges();
+        }
+      });
+    }
+
+    // React to progress changes
+    this.progress.onChange(() => {
+      this.updateProgressUI();
+      this.updatePatternBadges();
+    });
+
+    // Initial render
+    this.updateProgressUI();
+    this.updatePatternBadges();
+  }
+
+  // Update the progress bar and text
+  updateProgressUI() {
+    const { done, total } = this.progress.getProgress();
+    const textEl = document.getElementById('progressText');
+    const fillEl = document.getElementById('progressFill');
+    if (textEl) textEl.textContent = `${done} / ${total} solved`;
+    if (fillEl) fillEl.style.width = `${Math.round((done / total) * 100)}%`;
+  }
+
+  // Add/remove checkmark badges on pattern <option> elements
+  updatePatternBadges() {
+    const select = this.ui.elements.patternSelect;
+    if (!select) return;
+    Array.from(select.options).forEach(opt => {
+      const key = opt.value;
+      const done = this.progress.isCompleted(key);
+      // Strip any existing badge, then prepend
+      opt.text = opt.text.replace(/^✓\s*/, '');
+      if (done) opt.text = '✓ ' + opt.text;
+    });
   }
 
   // Wire up the AI assistant status badge

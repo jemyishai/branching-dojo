@@ -671,3 +671,175 @@ code {
     justify-content: space-between;
   }
 }
+
+/* ── Progress Tracking ───────────────────────────────────────────────────── */
+.progress-summary {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  margin-bottom: .75rem;
+  flex-wrap: wrap;
+}
+
+#progressText {
+  font-size: .8rem;
+  font-weight: 600;
+  color: var(--acc);
+  white-space: nowrap;
+}
+
+.progress-bar {
+  flex: 1;
+  min-width: 60px;
+  height: 6px;
+  background: var(--b);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--acc);
+  border-radius: 3px;
+  transition: width .4s ease;
+}
+
+.reset-progress-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: .7rem;
+  cursor: pointer;
+  padding: .15rem .3rem;
+  border-radius: .2rem;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  opacity: .7;
+  transition: opacity .15s;
+}
+
+.reset-progress-btn:hover {
+  opacity: 1;
+  color: var(--err);
+}
+
+/* Completed pattern options — browser support varies, so we rely on text prefix (✓) */
+
+/* ── Inline Loop-Bound Ghost Hint ────────────────────────────────────────── */
+.loop-bound-hint {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 12px;
+  color: var(--muted);
+  opacity: .65;
+  padding: .25rem .75rem .2rem 1.25rem;
+  border-left: 2px solid var(--b);
+  margin: -.25rem .75rem .25rem;
+  letter-spacing: .02em;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.loop-bound-hint::before {
+  content: '✦ ';
+  color: var(--acc);
+  opacity: .5;
+}
+
+:root[data-theme="matrix"] .loop-bound-hint {
+  color: var(--muted);
+  border-left-color: var(--b);
+}
+
+/* ── Tablet Layout (768px – 1024px) ─────────────────────────────────────── */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .app {
+    grid-template-columns: 280px 1fr;
+  }
+
+  aside {
+    padding: 1rem;
+  }
+
+  /* Collapse hint + note panels by default on tablet to save vertical space */
+  .card {
+    margin-bottom: .7rem;
+    padding: 1rem;
+  }
+
+  #editor {
+    height: 38vh;
+  }
+}
+
+/* ── Mobile Layout (<768px) ─────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  /* Pattern selector: compact scrollable row of chips instead of long dropdown */
+  .pattern-chip-row {
+    display: flex;
+    overflow-x: auto;
+    gap: .4rem;
+    padding-bottom: .3rem;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .pattern-chip-row::-webkit-scrollbar { display: none; }
+
+  /* Make run/explain buttons large enough for touch */
+  #runBtn, #explainBtn {
+    min-height: 48px;
+    padding: .65rem 1.4rem;
+    font-size: .95rem;
+  }
+
+  /* Output panel: prevent horizontal overflow */
+  #stdout {
+    overflow-x: auto;
+    max-width: 100%;
+    font-size: 12px;
+    padding: 8px;
+    white-space: pre;
+    word-break: normal;
+  }
+
+  #expectedPattern {
+    overflow-x: auto;
+    max-width: 100%;
+    white-space: pre;
+  }
+
+  /* Keep feedback readable */
+  #feedback {
+    font-size: .85rem;
+    padding: .5rem;
+  }
+
+  /* Loop bound hint full width on mobile */
+  .loop-bound-hint {
+    margin: -.25rem .5rem .25rem;
+    font-size: 11px;
+  }
+
+  /* Progress bar takes full row on very small screens */
+  .progress-summary {
+    gap: .4rem;
+  }
+
+  .progress-bar {
+    min-width: 40px;
+  }
+}
+
+/* Landscape mobile: give more height to editor */
+@media (max-width: 768px) and (orientation: landscape) {
+  #editor {
+    height: 200px;
+  }
+
+  aside {
+    max-height: 45vh;
+    overflow-y: auto;
+  }
+}
