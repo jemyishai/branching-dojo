@@ -753,6 +753,44 @@ code {
   border-left-color: var(--b);
 }
 
+/* ── Sidebar toggle (mobile only) ───────────────────────────────────────── */
+.sidebar-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.sidebar-toggle-btn {
+  display: none; /* shown only on mobile via media query */
+  background: none;
+  border: 1px solid var(--b);
+  color: var(--muted);
+  font-size: .75rem;
+  cursor: pointer;
+  padding: .2rem .5rem;
+  border-radius: .3rem;
+  transition: color .15s, background .15s;
+  min-height: 32px;
+}
+
+.sidebar-toggle-btn:hover {
+  background: var(--panel);
+  color: var(--text);
+}
+
+/* Collapsed state: only show the toggle header */
+#sidebar.collapsed #sidebarBody {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .sidebar-toggle-btn {
+    display: flex;
+    align-items: center;
+  }
+}
+
 /* ── Tablet Layout (768px – 1024px) ─────────────────────────────────────── */
 @media (min-width: 768px) and (max-width: 1024px) {
   .app {
