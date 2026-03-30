@@ -16,6 +16,7 @@
     <button class="btn" id="runBtn">Run ▶</button>
     <button class="btn" id="resetBtn">Reset</button>
     <button class="btn" id="lintBtn">Linting: Off</button>
+    <button class="btn" id="explainBtn" title="Explain what your code does in plain English">Explain ✦</button>
     <button id="themeToggle" class="btn" type="button" aria-pressed="false" title="Toggle theme">
       <span class="label">Matrix</span>
     </button>
@@ -30,8 +31,8 @@
       <button class="modal-close" id="closeModal">&times;</button>
     </div>
     <div class="modal-body">
-      <p>Hi! This is a tool to help learners practice nested for-loops. It is designed with beginning coders in mind, however, please keep in mind this site is just a tool. We do not know if a question like this will be on exam one.</p>
-      <p>Please read the Note to User section. Note that the C++ code is not actually compiled, though this Dojo functions well for practicing nested for-loops. Future versions of this site will give specific feedback for these problems.</p>
+      <p>Hi! This is a tool to help learners practice nested for-loops in C++. It is designed with beginning coders in mind.</p>
+      <p>Select a pattern, write C++ code to produce it, then click <b>Run</b>. Use the <b>Hint</b> panel for loop-structure guidance, and <b>Explain ✦</b> to see a plain-English summary of your code. When your output doesn't match, you'll get a specific hint about why.</p>
     </div>
     <div class="modal-footer">
       <button class="btn" id="getStarted">Get Started</button>
@@ -94,15 +95,15 @@
       </div>
       <div id="noteContent" style="display:none;margin-top:0.5rem;">
         <ul class="tiny" style="margin: 0; padding-left: 1.2rem;">
-          <li>Use the Code Editor to practice coding shapes C++</li> 
-          <li>This Dojo functions well for practicing nested for-loops but note that this code is not actually being compiled</li>
-          <li>Much C++ functionality will not work in this Dojo</li>
-          <li>This Dojo is meant to practice making shapes with nested for-loops</li>
-          <li>The linter is intentionally poor</li>
-          <li>Rather than highlight it will force you to read and review what you've coded</li>
-          <li>The shapes and patterns get progressively harder</li>
-          <li>Be careful not to overdue it on practicing.</li>
-          <li>Future versions of this site will offer specific feedback to help understand issues with this code</li>
+          <li>Use the Code Editor to practice coding shapes in C++</li>
+          <li>Your code is interpreted in the browser — it is <b>not</b> compiled by a real C++ compiler</li>
+          <li>Only a subset of C++ is supported: <code>for</code> loops, <code>int</code>/<code>char</code>, <code>cout</code></li>
+          <li>This Dojo is specifically for practicing nested for-loops to generate star patterns</li>
+          <li>The linter is intentionally minimal — it nudges rather than highlights</li>
+          <li>Click <b>Hint</b> to see the loop structure and get context-aware tips as you type</li>
+          <li>Click <b>Explain ✦</b> to get a plain-English description of what your code does</li>
+          <li>After running, if your output is wrong, you'll get a specific hint about why</li>
+          <li>Patterns get progressively harder — don't rush!</li>
           <li>For best results use a desktop or laptop computer</li>
           <li>Made by Jess!</li>
         </ul>
