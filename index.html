@@ -17,6 +17,9 @@
     <button class="btn" id="resetBtn">Reset</button>
     <button class="btn" id="lintBtn">Linting: Off</button>
     <button class="btn" id="explainBtn" title="Explain what your code does in plain English">Explain ✦</button>
+    <button id="challengeToggle" class="btn" type="button" aria-pressed="false" title="Hide expected output — figure it out yourself!">
+      Challenge 🎯
+    </button>
     <button id="themeToggle" class="btn" type="button" aria-pressed="false" title="Toggle theme">
       <span class="label">Matrix</span>
     </button>
@@ -83,9 +86,16 @@
       </div>
     </div>
     
-    <div class="card">
+    <div class="card" id="expectedPatternCard">
       <h3 class="muted" style="margin:.2rem 0 .4rem">Expected Pattern</h3>
       <pre id="expectedPattern" style="font-family:'Monaco','Menlo','Ubuntu Mono',monospace;font-size:12px;line-height:1.2;margin:0;color:var(--text);background:#f7fafc;padding:8px;border-radius:4px;overflow:auto;max-height:200px;border:1px solid var(--b)"></pre>
+    </div>
+    <div class="card challenge-placeholder" id="challengePlaceholder" style="display:none">
+      <div style="text-align:center;padding:.5rem 0">
+        <div style="font-size:2rem;margin-bottom:.4rem">🎯</div>
+        <b>Challenge Mode</b>
+        <p class="tiny" style="margin:.4rem 0 0">No peeking! Run your code to check.</p>
+      </div>
     </div>
     <div class="card">
       <div class="hint-header" id="hintToggle" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;">
@@ -222,6 +232,31 @@ addEventListener('scroll', () => {
     if (e.key === 'Escape' && modal.style.display === 'flex') {
       closeModal();
     }
+  });
+})();
+
+// Challenge mode toggle
+(() => {
+  const KEY = 'dojo-challenge';
+  const btn = document.getElementById('challengeToggle');
+  const expectedCard = document.getElementById('expectedPatternCard');
+  const placeholderCard = document.getElementById('challengePlaceholder');
+
+  function applyChallenge(on) {
+    document.body.classList.toggle('challenge-mode', on);
+    if (btn) {
+      btn.setAttribute('aria-pressed', String(on));
+      btn.classList.toggle('btn--challenge-active', on);
+    }
+    if (expectedCard) expectedCard.style.display = on ? 'none' : '';
+    if (placeholderCard) placeholderCard.style.display = on ? '' : 'none';
+    localStorage.setItem(KEY, String(on));
+  }
+
+  applyChallenge(localStorage.getItem(KEY) === 'true');
+
+  btn?.addEventListener('click', () => {
+    applyChallenge(!document.body.classList.contains('challenge-mode'));
   });
 })();
 

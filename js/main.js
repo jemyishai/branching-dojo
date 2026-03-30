@@ -274,18 +274,22 @@ class BridgeShapeDojoApp {
       this.appState.setOutput(output);
 
       // Display output
+      const challengeMode = document.body.classList.contains('challenge-mode');
       if (output) {
         this.ui.elements.stdout.textContent = output;
 
-        // Compare with expected for visual feedback
+        // Compare with expected
         const expected = this.patternManager.generatePattern(state.selectedPattern, N);
-        const {a} = this.ui.diffLines(output, expected);
-        this.ui.renderAnnotated(this.ui.elements.stdout, a);
-
-        // Provide feedback
         const isMatch = output.trim() === expected.trim();
         const msgs    = result.errors || [];
 
+        if (!challengeMode) {
+          // Normal mode: show diff coloring
+          const {a} = this.ui.diffLines(output, expected);
+          this.ui.renderAnnotated(this.ui.elements.stdout, a);
+        }
+
+        // Provide feedback
         if (msgs.length) {
           this.ui.elements.feedback.innerHTML =
             msgs.map(m => `• ${this.ui.escapeHtml(m)}`).join('<br>');
@@ -295,8 +299,19 @@ class BridgeShapeDojoApp {
           const celebration = firstTime ? ' First time! 🎉' : '';
           this.ui.elements.feedback.innerHTML =
             `<span class="ok">Perfect! ✅ Your pattern matches exactly!${celebration}</span>`;
+        } else if (challengeMode) {
+          // Challenge mode: directional hint only — no line-by-line specifics
+          const ai   = window.aiAssistant;
+          const hint = ai ? ai.getMistakeHint(output, expected, state.selectedPattern, src) : null;
+          if (hint) {
+            this.ui.elements.feedback.innerHTML =
+              `<span class="err">✦ ${this.ui.escapeHtml(hint)}</span>`;
+          } else {
+            this.ui.elements.feedback.innerHTML =
+              `<span class="err">Not quite — keep trying! 🎯</span>`;
+          }
         } else {
-          // Try to give a specific hint about what's wrong
+          // Normal mode: full hint
           const ai   = window.aiAssistant;
           const hint = ai ? ai.getMistakeHint(output, expected, state.selectedPattern, src) : null;
           if (hint) {
