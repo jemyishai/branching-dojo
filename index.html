@@ -11,6 +11,7 @@
 <header class="main-header">
   <h1>Bridge Shape</h1>
   <span id="status" class="status" aria-live="polite"></span>
+  <span id="aiStatus" class="ai-badge" aria-live="polite" aria-label="AI assistant status" style="display:none"></span>
   <div class="row">
     <button class="btn" id="runBtn">Run ▶</button>
     <button class="btn" id="resetBtn">Reset</button>
@@ -79,6 +80,10 @@
       </div>
       <div id="hintContent" style="display:none;margin-top:0.5rem;">
         <p id="patternHint" class="tiny">Start with two nested <code>for</code> loops. For "right"/pyramids, print leading spaces before stars. "Hollow" = only borders are stars.</p>
+        <div id="aiHintBox" class="ai-hint-box" style="display:none" aria-live="polite">
+          <div class="ai-hint-label">✦ Loop Structure</div>
+          <div id="aiHintText"></div>
+        </div>
       </div>
     </div>
     
@@ -126,6 +131,7 @@
 <script src="js/app-state.js"></script>
 <script src="js/ui-components.js"></script>
 <script src="js/main.js"></script>
+<script src="js/ai-assistant.js"></script>
 
 <script>
 // Compact header on scroll

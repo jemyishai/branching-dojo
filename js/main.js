@@ -49,13 +49,16 @@ class BridgeShapeDojoApp {
     this.ui.initElements();
     this.setupEventListeners();
     this.initializeState();
+    this.setupAIAssistant();
   }
 
   // Set up all event listeners
   setupEventListeners() {
-    // Pattern selection
+    // Pattern selection — also clear stale AI hint
     this.ui.elements.patternSelect.addEventListener('change', (e) => {
       this.appState.setPattern(e.target.value);
+      const box = document.getElementById('aiHintBox');
+      if (box) box.style.display = 'none';
     });
 
     // N input
@@ -97,9 +100,13 @@ class BridgeShapeDojoApp {
       this.appState.setLinting(!currentState.lintingEnabled);
     });
 
-    // Hint toggle
+    // Hint toggle — also refresh AI hint when panel opens
     this.ui.elements.hintToggle.addEventListener('click', () => {
       this.ui.toggleHint();
+      // After toggle, check if panel is now visible
+      if (this.ui.elements.hintContent.style.display !== 'none') {
+        this.fetchAIHint();
+      }
     });
 
     // Note to User toggle
@@ -203,6 +210,72 @@ class BridgeShapeDojoApp {
     
     this.ui.elements.status.textContent = 'Done.';
     this.ui.elements.runBtn.disabled = false;
+  }
+
+  // Wire up the AI assistant status badge and subscribe to status changes
+  setupAIAssistant() {
+    const badge = document.getElementById('aiStatus');
+    if (!badge || !window.aiAssistant) return;
+
+    window.aiAssistant.onStatus((status, msg) => {
+      if (status === 'idle') {
+        badge.style.display = 'none';
+        return;
+      }
+      badge.style.display = '';
+      badge.textContent = msg;
+      badge.className = `ai-badge ai-badge--${status}`;
+    });
+  }
+
+  // Fetch and render an AI-powered hint in the hint panel
+  async fetchAIHint() {
+    const box  = document.getElementById('aiHintBox');
+    const text = document.getElementById('aiHintText');
+    if (!box || !text) return;
+
+    const ai = window.aiAssistant;
+    if (!ai) { box.style.display = 'none'; return; }
+
+    const { status } = ai;
+
+    if (status === 'unavailable' || status === 'idle') {
+      box.style.display = 'none';
+      return;
+    }
+
+    // Show the box with a placeholder while we wait
+    box.style.display = 'block';
+    box.querySelector('.ai-hint-label').textContent = '✦ Loop Structure';
+
+    if (status === 'loading') {
+      text.innerHTML = '<em style="color:var(--muted)">AI model is still loading — check back in a moment.</em>';
+      return;
+    }
+
+    // Model is ready — run inference
+    text.innerHTML = '<em style="color:var(--muted)">Thinking…</em>';
+    const state  = this.appState.getState();
+    const result = await ai.getHint(state.code, state.selectedPattern);
+
+    const label = box.querySelector('.ai-hint-label');
+    label.textContent = result.type === 'ai' ? '✦ AI Suggestion' : '✦ Loop Structure';
+
+    let html = '';
+    if (result.isCode && result.text) {
+      html += `<pre class="ai-code-block">${this.ui.escapeHtml(result.text)}</pre>`;
+    } else if (result.text) {
+      html += `<span class="tiny">${this.ui.escapeHtml(result.text)}</span>`;
+    }
+    if (result.tip) {
+      html += `<p class="tiny" style="margin:.3rem 0 0;color:var(--muted)">${this.ui.escapeHtml(result.tip)}</p>`;
+    }
+
+    if (html) {
+      text.innerHTML = html;
+    } else {
+      box.style.display = 'none';
+    }
   }
 
   // Execute C++ code (wrapper for existing interpreter)

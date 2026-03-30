@@ -183,6 +183,120 @@ h1::after {
   top: -0.1em;
 }
 
+/* ── AI Status Badge ─────────────────────────────────────────────────────── */
+.ai-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  transition: background 0.3s, color 0.3s, opacity 0.3s;
+  border: 1px solid transparent;
+}
+
+.ai-badge::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* Loading: pulsing yellow dot */
+.ai-badge--loading {
+  background: rgba(255, 200, 0, 0.15);
+  color: #b07c00;
+  border-color: rgba(255, 200, 0, 0.35);
+}
+.ai-badge--loading::before {
+  background: #f0ad00;
+  animation: ai-pulse 1.2s ease-in-out infinite;
+}
+
+/* Ready: green dot */
+.ai-badge--ready {
+  background: rgba(25, 135, 84, 0.1);
+  color: #146c43;
+  border-color: rgba(25, 135, 84, 0.3);
+}
+.ai-badge--ready::before {
+  background: #198754;
+}
+
+/* Unavailable: muted gray */
+.ai-badge--unavailable {
+  background: rgba(108, 117, 125, 0.1);
+  color: var(--muted);
+  border-color: rgba(108, 117, 125, 0.2);
+}
+.ai-badge--unavailable::before {
+  background: var(--muted);
+  opacity: 0.5;
+}
+
+@keyframes ai-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.8); }
+}
+
+/* Matrix theme overrides for AI badge */
+:root[data-theme="matrix"] .ai-badge--loading {
+  background: rgba(255, 200, 0, 0.08);
+  color: #c8a000;
+  border-color: rgba(255, 200, 0, 0.2);
+}
+:root[data-theme="matrix"] .ai-badge--ready {
+  background: rgba(0, 230, 118, 0.1);
+  color: var(--acc);
+  border-color: rgba(0, 230, 118, 0.3);
+}
+:root[data-theme="matrix"] .ai-badge--ready::before {
+  background: var(--acc);
+}
+
+/* ── AI Hint Box (inside hint panel) ─────────────────────────────────────── */
+.ai-hint-box {
+  margin-top: 0.65rem;
+  padding: 0.5rem 0.6rem;
+  border-left: 2px solid var(--acc);
+  background: var(--code-bg);
+  border-radius: 0 6px 6px 0;
+  font-size: 0.8rem;
+}
+
+.ai-hint-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--acc);
+  margin-bottom: 0.3rem;
+  text-transform: uppercase;
+}
+
+.ai-code-block {
+  margin: 0.2rem 0 0.4rem;
+  padding: 0.35rem 0.5rem;
+  background: rgba(0,0,0,0.04);
+  border-radius: 4px;
+  font-family: 'Monaco','Menlo','Ubuntu Mono',monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  white-space: pre;
+  overflow-x: auto;
+  color: var(--text);
+}
+
+:root[data-theme="matrix"] .ai-code-block {
+  background: rgba(0, 230, 118, 0.05);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+
 .row {
   display: flex;
   gap: .5rem;
