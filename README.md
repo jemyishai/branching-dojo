@@ -1,114 +1,104 @@
 # Bridge Shape Dojo
 
-## Overview
-
-Bridge Shape Dojo is an interactive C++ learning platform designed to teach nested loops through visual pattern exercises. Students select from 17 different star patterns and write C++ code to generate them, receiving real-time feedback and guidance. The platform features a modern dual-theme system and modular architecture designed for educational excellence.
+An interactive C++ learning platform for teaching nested loops through visual star-pattern exercises. Students write C++ code, run it in the browser, and get instant visual feedback comparing their output to the expected pattern. Works fully offline — no install, no build step, no internet required.
 
 ## Features
 
-### Educational Tools
-- **17 Star Patterns**: Triangles, pyramids, squares, and diamonds with varying complexity
-- **Pattern-Specific Hints**: Dynamic, collapsible guidance that adapts to the selected pattern
-- **Intelligent Linting**: Real-time C++ syntax checking with educational feedback (toggleable)
-- **Visual Feedback**: Side-by-side comparison of student output vs expected pattern
-- **Clean Reset**: Simple boilerplate template for fresh coding attempts
-- **Progressive Learning**: Hints expand on click to encourage self-directed exploration
+### Learning Tools
+- **17 Star Patterns** — triangles, pyramids, squares, and diamonds with increasing complexity
+- **Pattern-Specific Hints** — collapsible hint panel shows the exact loop structure for each pattern
+- **Cursor-Aware Hints** — while typing with the hint panel open, hints update based on where your cursor is (outer loop, inner loop, cout line, etc.)
+- **Explain My Code** — click the **Explain ✦** button for a plain-English breakdown of what your loops do
+- **Smarter Feedback** — when output doesn't match, you get a specific reason: upside-down triangle, wrong row count, missing spaces, hollow vs. solid mismatch, off-by-one star counts
+- **Visual Diff** — your output and the expected pattern are shown side-by-side with mismatched lines highlighted
+- **Linting** — toggleable C++ syntax checker with educational suggestions
+- **Clean Reset** — clears the editor back to the default boilerplate
 
-### Modern Design System
-- **Dual Themes**: "Dojo Classic" (light blue professional) and "Dojo Matrix" (dark neon)
-- **Responsive Layout**: Optimized for desktop, tablet, and mobile devices
-- **Graph Paper Background**: Subtle coding-themed visual aesthetic
-- **Sticky Header**: Compact-on-scroll header with accessibility features
-- **Modern Typography**: Tahoma font family for optimal readability
+### Themes
+- **Dojo Classic** — light blue professional theme
+- **Dojo Matrix** — dark neon theme with green accents
+- Auto-detects system preference; saves your choice to localStorage
 
-### Technical Features
-- **Custom C++ Interpreter**: Browser-based execution of C++ subset code
-- **Modular Architecture**: React-ready component structure
-- **100% Client-Side**: No server required, works completely offline
-- **State Management**: Centralized reactive state system
-- **Theme Persistence**: Automatic theme saving with system preference detection
+### Technical
+- **Custom C++ Interpreter** — browser-based execution of a C++ subset (no compilation)
+- **100% Client-Side** — no server, no API keys, no internet required
+- **Modular Architecture** — separate files for state, patterns, linting, UI, and AI
+- **Responsive** — works on mobile; sticky compact header on scroll
+
+## Supported C++ Subset
+
+The interpreter supports an educational subset of C++:
+- `#include <iostream>` / `using namespace std;` (parsed but not required)
+- Variable declarations: `int`, `char`
+- `for` loops with standard syntax
+- Assignment: `=`, `+=`, `++` (pre/post), `--`
+- `cout << ... << "\n";` / `cout << endl;`
+- Basic arithmetic and character code arithmetic
+
+Things that will **not** work: `while`/`do-while`, functions, arrays, STL, pointers, `cin`.
+
+## How to Use
+
+1. Open `index.html` in any modern web browser
+2. Choose a pattern from the dropdown (patterns 1–17 increase in difficulty)
+3. Set `N` — the size of the pattern (default 5)
+4. Look at the **Expected Pattern** to understand your target
+5. Click **Hint** to see the loop structure guidance
+6. Write C++ code in the editor
+7. Click **Run ▶** (or Cmd/Ctrl+Enter) to execute and compare
+8. If your output is wrong, read the specific feedback hint below the output
+9. Click **Explain ✦** anytime to get a plain-English description of what your code is doing
+10. Click **Reset** to start fresh with a clean boilerplate
 
 ## Architecture
 
-### Modular Structure
 ```
-├── index.html           # Main application structure & dual-theme toggle
-├── styles.css          # Complete theme system with CSS variables
-├── cpp-interpreter.js  # C++ execution engine
-├── js/
-│   ├── main.js         # Application orchestrator & theme management
-│   ├── app-state.js    # Reactive state management with pub/sub
-│   ├── patterns.js     # 17 pattern definitions & specific hints
-│   ├── linter.js       # Educational C++ linting system
-│   └── ui-components.js# UI utilities & collapsible components
-├── AI_ENHANCEMENT_ROADMAP.md # Future AI integration plans
-└── README.md           # This documentation
+index.html            — app shell, header, pattern select, editor, output
+styles.css            — dual-theme system (Classic + Matrix) via CSS variables
+cpp-interpreter.js    — tokenizer → parser → AST → interpreter (~800 lines)
+js/
+  app-state.js        — reactive pub/sub state management
+  patterns.js         — 17 pattern generators + per-pattern text hints
+  linter.js           — educational C++ lint checks
+  ui-components.js    — DOM utilities, diff engine, rendering
+  main.js             — app orchestrator, event wiring, run/explain/feedback
+  ai-assistant.js     — rule-based AI: cursor hints, code explanation, mistake diagnosis
 ```
 
-### Theme System
-- **Dojo Classic**: Light blue professional theme with graph paper background
-- **Dojo Matrix**: Dark neon theme with green accents and Matrix-style effects
-- **CSS Variables**: Seamless theme switching without code duplication
-- **Smart Detection**: Automatic theme selection based on system preferences
-- **Persistence**: Theme choice saved across browser sessions
+## AI Features (Fully Rule-Based, No Downloads)
 
-### Design Principles
-- **Typography**: Tahoma font family for optimal code readability
-- **Accessibility**: ARIA labels, focus states, and mobile-friendly interactions  
-- **Progressive Enhancement**: Core functionality works without JavaScript
-- **Mobile-First**: Responsive grid that adapts from mobile to desktop
+All AI features are instant and offline. There is no model download.
 
-## Supported C++ Features
+| Feature | How it works |
+|---|---|
+| **AI Ready badge** | Shows immediately on page load |
+| **Loop structure hints** | Per-pattern step-by-step templates in `PATTERN_FALLBACKS` |
+| **Cursor-aware hints** | Detects loop level, line type, nesting — updates as you type |
+| **Explain My Code** | Parses `for` loop bounds, direction, and `cout` output |
+| **Mistake detection** | Analyzes row count, direction, leading spaces, star counts, hollow/solid |
 
-The platform supports an educational subset of C++ including:
-- Variable declarations (`int`, `char`)
-- For loops with multiple syntax variations
-- Assignment operations (`=`, `+=`, `++`)
-- Console output (`cout`)
-- Basic arithmetic and character operations
+## Pattern List
 
-## Pattern Categories
+| # | Name | Key Concept |
+|---|------|-------------|
+| 1 | Left Triangle | `j <= i` inner bound |
+| 2 | Hollow Left Triangle | border condition (`j==1 \|\| j==i \|\| i==N`) |
+| 3 | Downward Left Triangle | outer loop counts down |
+| 4 | Downward Hollow Left | down + border |
+| 5 | Right Triangle | leading spaces (`N-i`) |
+| 6 | Hollow Right Triangle | spaces + border stars |
+| 7 | Downward Right Triangle | down + leading spaces |
+| 8 | Downward Hollow Right | down + spaces + border |
+| 9 | Pyramid | spaces + `2*i-1` stars |
+| 10 | Hollow Pyramid | pyramid + border only |
+| 11 | Downward Pyramid | down pyramid |
+| 12 | Downward Hollow Pyramid | down + hollow |
+| 13 | Square | both loops 1→N |
+| 14 | Hollow Square | border condition on i and j |
+| 15 | Crossed Square | border + diagonal (`i==j \|\| i+j==N+1`) |
+| 16 | Diamond | two loop blocks (up + down) |
+| 17 | Hollow Diamond | hollow up + hollow down |
 
-1. **Triangles**: Left-aligned, right-aligned, hollow, and downward variations
-2. **Pyramids**: Centered patterns with solid and hollow options
-3. **Squares**: Solid, hollow, and crossed square patterns
-4. **Diamonds**: Combined upward and downward pyramid structures
+## Credits
 
-Each pattern includes specific implementation hints and teaching guidance.
-
-## Technical Implementation
-
-### State Management
-- Reactive state system with subscription-based updates
-- Centralized state management for scalability
-- Real-time synchronization between UI components
-
-### Modular Architecture Benefits
-- **Maintainable**: Clear separation of concerns
-- **Extensible**: Easy to add new patterns or features
-- **Testable**: Individual modules can be unit tested
-- **React-Ready**: Structure supports easy framework migration
-
-### Performance
-- Efficient rendering with minimal dependencies
-- Optimized for educational use cases
-- Safe execution with bounded iteration limits
-
-## Getting Started
-
-1. Open `index.html` in any modern web browser
-2. Choose your preferred theme using the toggle button (Classic or Matrix)
-3. Select a pattern from the dropdown menu (17 available patterns)
-4. View the expected output and click the hint to expand guidance
-5. Toggle linting on/off for real-time C++ feedback
-6. Write C++ code in the editor with pattern-specific assistance
-7. Click "Run" to execute and compare your output with the expected pattern
-8. Use "Reset" for a fresh start with clean boilerplate code
-
-### Theme Features
-- **Classic Theme**: Professional light blue design for traditional learning
-- **Matrix Theme**: Dark neon aesthetic for immersive coding experience
-- **Auto-Detection**: Automatically selects theme based on your system preferences
-- **Persistence**: Your theme choice is remembered across sessions
-
-The platform requires no installation, build process, or internet connection - simply open the HTML file to begin learning C++ nested loops through interactive pattern creation.
+Made by Jess. AI features added in Phase 2 (2026).
