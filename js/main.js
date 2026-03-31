@@ -77,10 +77,28 @@ class BridgeShapeDojoApp {
       this.scheduleCursorHint();
     });
 
-    // Tab key support in editor
+    // Tab key support in editor — accept loop completion if active, else indent
     this.ui.elements.editor.addEventListener('keydown', (e) => {
       if (e.key === 'Tab') {
         e.preventDefault();
+        const ai = window.aiAssistant;
+        if (ai && ai.getForLoopCompletion) {
+          const state = this.appState.getState();
+          const cursorPos = this.ui.elements.editor.selectionStart;
+          const completion = ai.getForLoopCompletion(state.code, cursorPos, state.selectedPattern);
+          if (completion) {
+            const { ghostText } = completion;
+            const code = this.ui.elements.editor.value;
+            this.ui.elements.editor.value = code.substring(0, cursorPos) + ghostText + code.substring(cursorPos);
+            const newPos = cursorPos + ghostText.length;
+            this.ui.elements.editor.selectionStart = this.ui.elements.editor.selectionEnd = newPos;
+            this.appState.setCode(this.ui.elements.editor.value);
+            this.hideLoopCompletionBar();
+            this.scheduleCursorHint();
+            return;
+          }
+        }
+        // Normal indent
         const start = this.ui.elements.editor.selectionStart;
         const end = this.ui.elements.editor.selectionEnd;
         this.ui.elements.editor.value = this.ui.elements.editor.value.substring(0, start) +
@@ -90,10 +108,11 @@ class BridgeShapeDojoApp {
       }
     });
 
-    // Hide loop-bound hint when editor loses focus
+    // Hide loop-bound hint and completion bar when editor loses focus
     this.ui.elements.editor.addEventListener('blur', () => {
       const hintEl = document.getElementById('loopBoundHint');
       if (hintEl) hintEl.style.display = 'none';
+      this.hideLoopCompletionBar();
     });
 
     // Also update cursor hint when cursor moves (click/select)
@@ -238,6 +257,12 @@ class BridgeShapeDojoApp {
 
   // Update the AI hint box with a context-aware hint based on cursor position
   updateCursorHint() {
+    const state     = this.appState.getState();
+    const cursorPos = this.ui.elements.editor.selectionStart || 0;
+
+    // Always update the completion bar — independent of hint panel state
+    this.updateLoopCompletionBar(state.code, cursorPos, state.selectedPattern);
+
     const hintContent = this.ui.elements.hintContent;
     if (!hintContent || hintContent.style.display === 'none') return;
 
@@ -248,8 +273,6 @@ class BridgeShapeDojoApp {
     const ai = window.aiAssistant;
     if (!ai) return;
 
-    const state     = this.appState.getState();
-    const cursorPos = this.ui.elements.editor.selectionStart || 0;
     const result    = ai.getCursorHint(state.code, cursorPos, state.selectedPattern);
 
     const label = box.querySelector('.ai-hint-label');
@@ -285,6 +308,30 @@ class BridgeShapeDojoApp {
     const partLabel = { init: 'initializer', cond: 'condition', incr: 'increment' }[hint.part] || hint.part;
     hintEl.textContent = `for() ${partLabel} → ${hint.suggestion}`;
     hintEl.style.display = 'block';
+  }
+
+  // Update the inline completion bar with ghost text when cursor is in a for()
+  updateLoopCompletionBar(code, cursorPos, patternKey) {
+    const bar = document.getElementById('loopCompletionBar');
+    if (!bar) return;
+
+    const ai = window.aiAssistant;
+    if (!ai || !ai.getForLoopCompletion) { bar.style.display = 'none'; return; }
+
+    const result = ai.getForLoopCompletion(code, cursorPos, patternKey);
+    if (!result) { bar.style.display = 'none'; return; }
+
+    const typedEl = bar.querySelector('.lc-typed');
+    const ghostEl = bar.querySelector('.lc-ghost');
+    if (typedEl) typedEl.textContent = result.typedPart;
+    if (ghostEl) ghostEl.textContent = result.ghostText;
+    bar.style.display = 'flex';
+  }
+
+  // Hide the completion bar
+  hideLoopCompletionBar() {
+    const bar = document.getElementById('loopCompletionBar');
+    if (bar) bar.style.display = 'none';
   }
 
   // Show a plain-English explanation of the student's code

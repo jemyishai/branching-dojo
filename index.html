@@ -153,6 +153,11 @@
     <!-- Loop bound hint: ghost text shown when cursor is inside a for() -->
     <div id="loopBoundHint" class="loop-bound-hint" style="display:none" aria-live="polite"></div>
 
+    <!-- Loop completion bar: inline ghost suggestion with Tab-to-accept -->
+    <div id="loopCompletionBar" class="loop-completion-bar" style="display:none" aria-hidden="true">
+      <span class="lc-typed"></span><span class="lc-ghost"></span><span class="lc-label">⇥ accept</span>
+    </div>
+
     <div style="border-top:1px solid var(--b);padding:.75rem;min-height:220px">
       <h3 class="muted" style="margin:.2rem 0 .4rem">Your Output</h3>
       <pre id="stdout" aria-live="polite" aria-label="Your code output" style="font-family:'Monaco','Menlo','Ubuntu Mono',monospace;font-size:14px;line-height:1.4;margin:0;color:var(--text);background:#f7fafc;padding:12px;border-radius:4px;overflow:auto;min-height:180px;border:1px solid var(--b)"></pre>

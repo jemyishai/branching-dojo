@@ -576,6 +576,66 @@ class AIAssistant {
   }
 
   // -------------------------------------------------------------------------
+  // getForLoopCompletion — returns ghost-text completion when cursor is
+  // inside a for() expression that is a prefix of the suggested template.
+  // Returns { typedPart, ghostText, fullFor } or null.
+  // -------------------------------------------------------------------------
+  getForLoopCompletion(code, cursorPos, patternKey) {
+    const before = code.substring(0, cursorPos);
+
+    // Find the last 'for (' before cursor
+    const forRegex = /\bfor\s*\(/g;
+    let lastFor = null, m;
+    while ((m = forRegex.exec(before)) !== null) lastFor = m;
+    if (!lastFor) return null;
+
+    const openParen = lastFor.index + lastFor[0].length - 1;
+
+    // Find the matching closing ')'
+    let depth = 0, closeParen = -1;
+    for (let i = openParen; i < code.length; i++) {
+      if (code[i] === '(') depth++;
+      else if (code[i] === ')') { depth--; if (depth === 0) { closeParen = i; break; } }
+    }
+
+    // Cursor must be strictly inside the parens
+    if (cursorPos <= openParen || (closeParen !== -1 && cursorPos > closeParen)) return null;
+
+    // If expression is already complete (closing paren exists and has 2 semicolons), skip
+    if (closeParen !== -1) {
+      const inside = code.substring(openParen + 1, closeParen);
+      let semis = 0, d = 0;
+      for (const ch of inside) {
+        if (ch === '(') d++;
+        else if (ch === ')') d--;
+        else if (ch === ';' && d === 0) semis++;
+      }
+      if (semis >= 2) return null;
+    }
+
+    // Determine outer vs inner loop
+    const beforeFor = code.substring(0, lastFor.index);
+    const forsBefore = (beforeFor.match(/\bfor\s*\(/g) || []).length;
+    const loopHints = FOR_PART_HINTS[patternKey] ?? FOR_PART_HINTS._default;
+    const loop = forsBefore === 0 ? loopHints.outer : loopHints.inner;
+    if (!loop) return null;
+
+    // Build the full suggested for expression
+    const fullFor = `for (${loop.init}; ${loop.cond}; ${loop.incr})`;
+
+    // What has the student typed from 'for' to cursor?
+    const typedPart = code.substring(lastFor.index, cursorPos);
+
+    // Only suggest if what's typed is a valid prefix of our suggestion
+    if (!fullFor.startsWith(typedPart)) return null;
+
+    const ghostText = fullFor.slice(typedPart.length);
+    if (!ghostText) return null; // nothing left to complete
+
+    return { typedPart, ghostText, fullFor };
+  }
+
+  // -------------------------------------------------------------------------
   // Rule-based fallback hint (loop structure for the selected pattern)
   // -------------------------------------------------------------------------
   _fallbackHint(patternKey) {

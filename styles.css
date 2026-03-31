@@ -753,6 +753,45 @@ code {
   border-left-color: var(--b);
 }
 
+/* ── Inline Loop Completion Bar ─────────────────────────────────────────── */
+.loop-completion-bar {
+  display: flex;
+  align-items: baseline;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 12.5px;
+  padding: .3rem .75rem .25rem 1.25rem;
+  border-left: 2px solid var(--acc);
+  margin: 0 .75rem .3rem;
+  white-space: nowrap;
+  overflow: hidden;
+  gap: 0;
+}
+
+.lc-typed {
+  color: var(--text);
+  opacity: .75;
+}
+
+.lc-ghost {
+  color: var(--muted);
+  font-style: italic;
+  opacity: .6;
+}
+
+.lc-label {
+  margin-left: auto;
+  padding-left: .75rem;
+  font-size: 10px;
+  color: var(--muted);
+  opacity: .5;
+  font-style: normal;
+  flex-shrink: 0;
+}
+
+:root[data-theme="matrix"] .loop-completion-bar {
+  border-left-color: var(--acc);
+}
+
 /* ── Sidebar toggle (mobile only) ───────────────────────────────────────── */
 .sidebar-toggle-row {
   display: flex;
