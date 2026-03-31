@@ -74,6 +74,7 @@ class UIComponents {
     const isVisible = this.elements.hintContent.style.display !== 'none';
     this.elements.hintContent.style.display = isVisible ? 'none' : 'block';
     this.elements.hintArrow.style.transform = isVisible ? 'rotate(0deg)' : 'rotate(180deg)';
+    this.elements.hintToggle.setAttribute('aria-expanded', String(!isVisible));
   }
 
   // Toggle note to user visibility
@@ -81,6 +82,7 @@ class UIComponents {
     const isVisible = this.elements.noteContent.style.display !== 'none';
     this.elements.noteContent.style.display = isVisible ? 'none' : 'block';
     this.elements.noteArrow.style.transform = isVisible ? 'rotate(0deg)' : 'rotate(180deg)';
+    this.elements.noteToggle.setAttribute('aria-expanded', String(!isVisible));
   }
 
   // Update linting display
@@ -150,7 +152,7 @@ class UIComponents {
       if (p === '%good%') { mode = 'good'; continue; }
       if (p === '%/%') { mode = null; continue; }
       if (!p) continue;
-      if (mode) html += `<div class="diffLine ${mode}">${this.escapeHtml(p)}</div>`;
+      if (mode) html += `<div class="diffLine ${mode}" aria-label="${mode === 'bad' ? 'wrong' : 'correct'}: ${this.escapeHtml(p)}">${this.escapeHtml(p)}</div>`;
       else html += `<div class="diffLine">${this.escapeHtml(p)}</div>`;
     }
     el.innerHTML = html;

@@ -57,11 +57,13 @@ class BridgeShapeDojoApp {
 
   // Set up all event listeners
   setupEventListeners() {
-    // Pattern selection — also clear stale AI hint
+    // Pattern selection — also clear stale AI hint and announce selection
     this.ui.elements.patternSelect.addEventListener('change', (e) => {
       this.appState.setPattern(e.target.value);
       const box = document.getElementById('aiHintBox');
       if (box) box.style.display = 'none';
+      const selectedText = e.target.options[e.target.selectedIndex].text.replace(/^✓\s*/, '');
+      this._announce(`Pattern selected: ${selectedText}`);
     });
 
     // N input
@@ -118,18 +120,34 @@ class BridgeShapeDojoApp {
       this.appState.setLinting(!currentState.lintingEnabled);
     });
 
-    // Hint toggle — also refresh AI hint when panel opens
+    // Hint toggle — also refresh AI hint when panel opens, manage focus
     this.ui.elements.hintToggle.addEventListener('click', () => {
       this.ui.toggleHint();
-      // After toggle, check if panel is now visible
       if (this.ui.elements.hintContent.style.display !== 'none') {
         this.fetchAIHint();
+        // Move focus into the panel so screen reader users hear the content
+        this.ui.elements.hintContent.setAttribute('tabindex', '-1');
+        this.ui.elements.hintContent.focus();
+      }
+    });
+    // Space/Enter keyboard activation for hint toggle (role="button" div)
+    this.ui.elements.hintToggle.addEventListener('keydown', (e) => {
+      if (e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault();
+        this.ui.elements.hintToggle.click();
       }
     });
 
     // Note to User toggle
     this.ui.elements.noteToggle.addEventListener('click', () => {
       this.ui.toggleNote();
+    });
+    // Space/Enter keyboard activation for note toggle (role="button" div)
+    this.ui.elements.noteToggle.addEventListener('keydown', (e) => {
+      if (e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault();
+        this.ui.elements.noteToggle.click();
+      }
     });
 
     // Explain My Code button
@@ -170,10 +188,12 @@ class BridgeShapeDojoApp {
         const hintContent = this.ui.elements.hintContent;
         if (hintContent && hintContent.style.display !== 'none') {
           e.preventDefault();
-          // Close hint panel
+          // Close hint panel and return focus to toggle
           hintContent.style.display = 'none';
           const arrow = this.ui.elements.hintArrow;
           if (arrow) arrow.style.transform = 'rotate(0deg)';
+          this.ui.elements.hintToggle.setAttribute('aria-expanded', 'false');
+          this.ui.elements.hintToggle.focus();
         }
       }
     });
@@ -326,12 +346,14 @@ class BridgeShapeDojoApp {
         if (msgs.length) {
           this.ui.elements.feedback.innerHTML =
             msgs.map(m => `• ${this.ui.escapeHtml(m)}`).join('<br>');
+          this._announce(msgs.join('. '));
         } else if (isMatch) {
           const firstTime = this.progress.recordCompletion(state.selectedPattern);
           this.updatePatternBadges();
           const celebration = firstTime ? ' First time! 🎉' : '';
           this.ui.elements.feedback.innerHTML =
             `<span class="ok">Perfect! ✅ Your pattern matches exactly!${celebration}</span>`;
+          this._announce(`Correct! Pattern complete.${firstTime ? ' First time!' : ''}`);
         } else if (challengeMode) {
           // Challenge mode: directional hint only — no line-by-line specifics
           const ai   = window.aiAssistant;
@@ -339,9 +361,11 @@ class BridgeShapeDojoApp {
           if (hint) {
             this.ui.elements.feedback.innerHTML =
               `<span class="err">✦ ${this.ui.escapeHtml(hint)}</span>`;
+            this._announce(`Not quite. ${hint}`);
           } else {
             this.ui.elements.feedback.innerHTML =
               `<span class="err">Not quite — keep trying! 🎯</span>`;
+            this._announce('Not quite. Keep trying!');
           }
         } else {
           // Normal mode: full hint
@@ -350,9 +374,11 @@ class BridgeShapeDojoApp {
           if (hint) {
             this.ui.elements.feedback.innerHTML =
               `<span class="err">✦ ${this.ui.escapeHtml(hint)}</span>`;
+            this._announce(`Not quite. ${hint}`);
           } else {
             this.ui.elements.feedback.innerHTML =
               `<span class="err">Not quite — compare your output with the expected pattern. Try using "* " (asterisk + space) per star.</span>`;
+            this._announce('Not quite. Compare your output with the expected pattern.');
           }
         }
       } else {
@@ -369,6 +395,9 @@ class BridgeShapeDojoApp {
 
     this.ui.elements.status.textContent = 'Done.';
     this.ui.elements.runBtn.disabled = false;
+
+    // Move focus to feedback so screen reader users hear the result
+    this.ui.elements.feedback.focus();
   }
 
   // Set up progress tracking UI and event listeners
@@ -401,8 +430,10 @@ class BridgeShapeDojoApp {
     const { done, total } = this.progress.getProgress();
     const textEl = document.getElementById('progressText');
     const fillEl = document.getElementById('progressFill');
+    const barEl  = document.getElementById('progressBar');
     if (textEl) textEl.textContent = `${done} / ${total} solved`;
     if (fillEl) fillEl.style.width = `${Math.round((done / total) * 100)}%`;
+    if (barEl)  barEl.setAttribute('aria-valuenow', String(done));
   }
 
   // Add/remove checkmark badges on pattern <option> elements
@@ -461,6 +492,14 @@ class BridgeShapeDojoApp {
     } else {
       box.style.display = 'none';
     }
+  }
+
+  // Announce a message via the hidden live region for screen readers
+  _announce(text) {
+    const el = document.getElementById('ariaAnnouncer');
+    if (!el) return;
+    el.textContent = '';
+    setTimeout(() => { el.textContent = text; }, 50);
   }
 
   // Brief visual flash on Run button when triggered by keyboard shortcut

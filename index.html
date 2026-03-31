@@ -34,12 +34,15 @@
   </div>
 </header>
 
+<!-- Screen reader live region for announcements -->
+<div id="ariaAnnouncer" aria-live="polite" aria-atomic="true" class="sr-only"></div>
+
 <!-- Welcome Modal -->
-<div id="welcomeModal" class="modal" style="display: none;">
+<div id="welcomeModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="welcomeModalTitle" style="display: none;">
   <div class="modal-content">
     <div class="modal-header">
-      <h3>Welcome to Bridge Shape Dojo!</h3>
-      <button class="modal-close" id="closeModal">&times;</button>
+      <h3 id="welcomeModalTitle">Welcome to Bridge Shape Dojo!</h3>
+      <button class="modal-close" id="closeModal" aria-label="Close welcome dialog">&times;</button>
     </div>
     <div class="modal-body">
       <p>Hi! This is a tool to help learners practice nested for-loops in C++. It is designed with beginning coders in mind.</p>
@@ -63,7 +66,7 @@
     <!-- Progress summary -->
     <div id="progressSummary" class="progress-summary">
       <span id="progressText">0 / 17 solved</span>
-      <div id="progressBar" class="progress-bar"><div id="progressFill" class="progress-fill" style="width:0%"></div></div>
+      <div id="progressBar" class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="17" aria-label="Pattern completion progress"><div id="progressFill" class="progress-fill" style="width:0%"></div></div>
       <button id="resetProgressBtn" class="reset-progress-btn" title="Reset all progress">Reset progress</button>
     </div>
 
@@ -106,11 +109,11 @@
       </div>
     </div>
     <div class="card">
-      <div class="hint-header" id="hintToggle" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;">
+      <div class="hint-header" id="hintToggle" role="button" tabindex="0" aria-expanded="false" aria-controls="hintContent" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;">
         <b>Hint</b>
-        <span id="hintArrow" style="font-size:12px;transition:transform 0.2s;">▼</span>
+        <span id="hintArrow" aria-hidden="true" style="font-size:12px;transition:transform 0.2s;">▼</span>
       </div>
-      <div id="hintContent" style="display:none;margin-top:0.5rem;">
+      <div id="hintContent" role="region" aria-label="Hint" style="display:none;margin-top:0.5rem;">
         <p id="patternHint" class="tiny">Start with two nested <code>for</code> loops. For "right"/pyramids, print leading spaces before stars. "Hollow" = only borders are stars.</p>
         <div id="aiHintBox" class="ai-hint-box" style="display:none" aria-live="polite">
           <div class="ai-hint-label">✦ Loop Structure</div>
@@ -120,11 +123,11 @@
     </div>
     
     <div class="card">
-      <div class="note-header" id="noteToggle" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;">
+      <div class="note-header" id="noteToggle" role="button" tabindex="0" aria-expanded="false" aria-controls="noteContent" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;">
         <b>Note to User</b>
-        <span id="noteArrow" style="font-size:12px;transition:transform 0.2s;">▼</span>
+        <span id="noteArrow" aria-hidden="true" style="font-size:12px;transition:transform 0.2s;">▼</span>
       </div>
-      <div id="noteContent" style="display:none;margin-top:0.5rem;">
+      <div id="noteContent" role="region" aria-label="Notes" style="display:none;margin-top:0.5rem;">
         <ul class="tiny" style="margin: 0; padding-left: 1.2rem;">
           <li>Use the Code Editor to practice coding shapes in C++</li>
           <li>Your code is interpreted in the browser — it is <b>not</b> compiled by a real C++ compiler</li>
@@ -145,18 +148,18 @@
 
   <main>
     <h2 class="muted" style="margin:1.5rem 0 10px 0.75rem;">Code Editor</h2>
-    <textarea id="editor" spellcheck="false"></textarea>
+    <textarea id="editor" spellcheck="false" aria-label="C++ code editor"></textarea>
 
     <!-- Loop bound hint: ghost text shown when cursor is inside a for() -->
     <div id="loopBoundHint" class="loop-bound-hint" style="display:none" aria-live="polite"></div>
 
     <div style="border-top:1px solid var(--b);padding:.75rem;min-height:220px">
       <h3 class="muted" style="margin:.2rem 0 .4rem">Your Output</h3>
-      <pre id="stdout" style="font-family:'Monaco','Menlo','Ubuntu Mono',monospace;font-size:14px;line-height:1.4;margin:0;color:var(--text);background:#f7fafc;padding:12px;border-radius:4px;overflow:auto;min-height:180px;border:1px solid var(--b)"></pre>
+      <pre id="stdout" aria-live="polite" aria-label="Your code output" style="font-family:'Monaco','Menlo','Ubuntu Mono',monospace;font-size:14px;line-height:1.4;margin:0;color:var(--text);background:#f7fafc;padding:12px;border-radius:4px;overflow:auto;min-height:180px;border:1px solid var(--b)"></pre>
     </div>
 
     <div style="border-top:1px solid var(--b);padding:.5rem .75rem">
-      <div id="feedback" class="tiny"></div>
+      <div id="feedback" class="tiny" aria-live="assertive" role="status" tabindex="-1"></div>
     </div>
   </main>
 </div>
@@ -223,32 +226,47 @@ addEventListener('scroll', () => {
   const closeBtn = document.getElementById('closeModal');
   const getStartedBtn = document.getElementById('getStarted');
   const KEY = 'dojo-welcome-shown';
-  
+  let previouslyFocused = null;
+
+  const getFocusable = () => Array.from(
+    modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')
+  ).filter(el => !el.disabled);
+
   // Show modal on first visit
   if (!localStorage.getItem(KEY)) {
     setTimeout(() => {
       modal.style.display = 'flex';
+      previouslyFocused = document.activeElement;
+      const first = getFocusable()[0];
+      if (first) first.focus();
     }, 500);
   }
-  
+
   // Close modal handlers
   const closeModal = () => {
     modal.style.display = 'none';
     localStorage.setItem(KEY, 'true');
+    if (previouslyFocused) previouslyFocused.focus();
   };
-  
+
   closeBtn?.addEventListener('click', closeModal);
   getStartedBtn?.addEventListener('click', closeModal);
-  
+
   // Close on outside click
   modal?.addEventListener('click', (e) => {
     if (e.target === modal) closeModal();
   });
-  
-  // Close on escape key
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && modal.style.display === 'flex') {
-      closeModal();
+
+  // Focus trap + escape
+  modal?.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { closeModal(); return; }
+    if (e.key !== 'Tab') return;
+    const focusable = getFocusable();
+    const first = focusable[0], last = focusable[focusable.length - 1];
+    if (e.shiftKey) {
+      if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+    } else {
+      if (document.activeElement === last) { e.preventDefault(); first.focus(); }
     }
   });
 })();
@@ -269,6 +287,11 @@ addEventListener('scroll', () => {
     if (expectedCard) expectedCard.style.display = on ? 'none' : '';
     if (placeholderCard) placeholderCard.style.display = on ? '' : 'none';
     localStorage.setItem(KEY, String(on));
+    const announcer = document.getElementById('ariaAnnouncer');
+    if (announcer) {
+      announcer.textContent = '';
+      setTimeout(() => { announcer.textContent = on ? 'Challenge mode on. Expected output hidden.' : 'Challenge mode off. Expected output visible.'; }, 50);
+    }
   }
 
   applyChallenge(localStorage.getItem(KEY) === 'true');

@@ -973,6 +973,105 @@ body.challenge-mode #editor:focus {
   animation: btn-flash 0.35s ease-out;
 }
 
+/* ── Accessibility ──────────────────────────────────────────────────────── */
+
+/* Screen-reader-only utility — visually hidden but in the a11y tree */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Visible focus rings on all interactive elements */
+select:focus-visible,
+input:focus-visible {
+  outline: 3px solid var(--acc);
+  outline-offset: 2px;
+}
+
+[role="button"]:focus-visible {
+  outline: 3px solid var(--acc);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.modal-close:focus-visible {
+  outline: 3px solid var(--acc);
+  outline-offset: 2px;
+}
+
+.reset-progress-btn:focus-visible {
+  outline: 3px solid var(--acc);
+  outline-offset: 2px;
+  opacity: 1;
+}
+
+.sidebar-toggle-btn:focus-visible {
+  outline: 3px solid var(--acc);
+  outline-offset: 2px;
+}
+
+/* Diff output — text prefix indicators so feedback isn't color-only */
+.diffLine.bad::before {
+  content: '✗ ';
+  color: var(--err);
+  font-weight: 700;
+  font-size: 0.85em;
+}
+
+.diffLine.good::before {
+  content: '✓ ';
+  color: var(--ok);
+  font-weight: 700;
+  font-size: 0.85em;
+}
+
+/* ── Reduced Motion ─────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .main-header {
+    transition: none;
+  }
+
+  .card {
+    transition: none;
+  }
+
+  .card:hover {
+    transform: none;
+  }
+
+  .btn:hover {
+    transform: none;
+  }
+
+  .progress-fill {
+    transition: none;
+  }
+
+  .modal {
+    animation: none;
+  }
+
+  .modal-content {
+    animation: none;
+  }
+}
+
 /* Landscape mobile: give more height to editor */
 @media (max-width: 768px) and (orientation: landscape) {
   #editor {
