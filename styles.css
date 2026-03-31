@@ -914,6 +914,65 @@ body.challenge-mode #editor:focus {
   background: rgba(245, 158, 11, 0.06);
 }
 
+/* ── Keyboard shortcut legend ───────────────────────────────────────────── */
+.shortcut-legend {
+  position: relative;
+  font-size: 0.75rem;
+  color: var(--muted);
+  cursor: default;
+  white-space: nowrap;
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.4rem;
+  border: 1px solid var(--b);
+  background: transparent;
+  user-select: none;
+  align-self: center;
+}
+
+.shortcut-legend:hover .shortcut-tooltip,
+.shortcut-legend:focus-within .shortcut-tooltip {
+  display: block;
+}
+
+.shortcut-tooltip {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: var(--card);
+  border: 1px solid var(--b);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  min-width: 200px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  z-index: 100;
+  font-size: 0.8rem;
+  line-height: 1.8;
+  color: var(--text);
+}
+
+.shortcut-tooltip kbd {
+  display: inline-block;
+  background: var(--code-bg, #f0f4f8);
+  border: 1px solid var(--b);
+  border-radius: 3px;
+  padding: 0 4px;
+  font-family: monospace;
+  font-size: 0.75rem;
+  color: var(--text);
+}
+
+/* Run button flash on keyboard trigger */
+@keyframes btn-flash {
+  0%   { background: var(--acc); box-shadow: 0 0 0 0 rgba(13,110,253,0.5); }
+  40%  { background: color-mix(in oklab, var(--acc) 60%, white 40%); box-shadow: 0 0 0 6px rgba(13,110,253,0); }
+  100% { background: var(--acc); box-shadow: 0 0 0 0 rgba(13,110,253,0); }
+}
+
+.btn--flash {
+  animation: btn-flash 0.35s ease-out;
+}
+
 /* Landscape mobile: give more height to editor */
 @media (max-width: 768px) and (orientation: landscape) {
   #editor {

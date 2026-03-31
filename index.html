@@ -23,6 +23,14 @@
     <button id="themeToggle" class="btn" type="button" aria-pressed="false" title="Toggle theme">
       <span class="label">Matrix</span>
     </button>
+    <span class="shortcut-legend" tabindex="0" aria-label="Keyboard shortcuts" id="shortcutLegend">⌨ shortcuts
+      <div class="shortcut-tooltip" role="tooltip" id="shortcutTooltip">
+        <div><kbd id="skRun">Ctrl+Enter</kbd> Run code</div>
+        <div><kbd id="skReset">Ctrl+R</kbd> Reset editor</div>
+        <div><kbd id="skHint">Ctrl+/</kbd> Toggle hint</div>
+        <div><kbd>Esc</kbd> Close hint</div>
+      </div>
+    </span>
   </div>
 </header>
 
@@ -163,6 +171,16 @@
 <script src="js/ai-assistant.js"></script>
 
 <script>
+// Swap shortcut labels to ⌘ on Mac
+(() => {
+  if (!/Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent)) return;
+  const keys = { skRun: '⌘↩', skReset: '⌘R', skHint: '⌘/' };
+  for (const [id, k] of Object.entries(keys)) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = k;
+  }
+})();
+
 // Compact header on scroll
 let prevScrollY = scrollY;
 addEventListener('scroll', () => {

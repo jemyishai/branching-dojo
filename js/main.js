@@ -138,10 +138,43 @@ class BridgeShapeDojoApp {
       explainBtn.addEventListener('click', () => this.showCodeExplanation());
     }
 
-    // Keyboard shortcuts
+    // Keyboard shortcuts — fire when editor is focused or no input element is focused
     document.addEventListener('keydown', (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+      const active = document.activeElement;
+      const editorFocused = active === this.ui.elements.editor;
+      const noInputFocused = !active || !['INPUT', 'TEXTAREA', 'SELECT'].includes(active.tagName);
+      if (!editorFocused && !noInputFocused) return;
+
+      const mod = e.metaKey || e.ctrlKey;
+
+      if (mod && e.key === 'Enter') {
+        e.preventDefault();
+        this._flashRunBtn();
         this.runCode();
+        return;
+      }
+
+      if (mod && e.key === 'r') {
+        e.preventDefault();
+        this.resetCode();
+        return;
+      }
+
+      if (mod && e.key === '/') {
+        e.preventDefault();
+        this.ui.elements.hintToggle.click();
+        return;
+      }
+
+      if (e.key === 'Escape') {
+        const hintContent = this.ui.elements.hintContent;
+        if (hintContent && hintContent.style.display !== 'none') {
+          e.preventDefault();
+          // Close hint panel
+          hintContent.style.display = 'none';
+          const arrow = this.ui.elements.hintArrow;
+          if (arrow) arrow.style.transform = 'rotate(0deg)';
+        }
       }
     });
   }
@@ -428,6 +461,17 @@ class BridgeShapeDojoApp {
     } else {
       box.style.display = 'none';
     }
+  }
+
+  // Brief visual flash on Run button when triggered by keyboard shortcut
+  _flashRunBtn() {
+    const btn = this.ui.elements.runBtn;
+    if (!btn) return;
+    btn.classList.remove('btn--flash');
+    // Force reflow so re-adding the class restarts the animation
+    void btn.offsetWidth;
+    btn.classList.add('btn--flash');
+    btn.addEventListener('animationend', () => btn.classList.remove('btn--flash'), { once: true });
   }
 
   // Execute C++ code (wrapper for existing interpreter)
